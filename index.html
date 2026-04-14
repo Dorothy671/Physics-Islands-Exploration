@@ -1608,17 +1608,14 @@
       <div id="quiz-load-error" class="card quiz-load-error hidden">
         <h3>题目加载失败</h3>
         <p id="quiz-load-error-msg">无法读取题目文件。</p>
-        <p class="page-sub" style="text-align:center;margin-bottom:12px">
-          请确认已使用本地服务器打开页面，且路径存在：<code style="font-size:12px">questions/压强题目.docx</code>（<code>file://</code> 下浏览器通常无法读取本地文件）。
-        </p>
+        <p class="page-sub" style="text-align:center;margin-bottom:12px">题目已内嵌在页面中。若仍看到本提示，请刷新页面或返回任务页重试。</p>
         <button type="button" class="btn-primary" id="btn-quiz-retry-load">重试加载</button>
         <button type="button" class="btn-outline" style="margin-top:10px" data-nav="island">返回任务</button>
       </div>
 
       <div id="quiz-loading" class="card quiz-loading hidden">
         <div class="quiz-spinner" aria-hidden="true"></div>
-        <p style="font-weight:700;color:var(--primary-deep)">正在加载题目…</p>
-        <p class="page-sub" style="margin-top:6px">从 Word 文档解析中</p>
+        <p style="font-weight:700;color:var(--primary-deep)">正在准备题目…</p>
       </div>
 
       <div id="quiz-main" class="hidden">
@@ -1666,9 +1663,7 @@
       <div id="daily-load-error" class="card quiz-load-error hidden">
         <h3>题目加载失败</h3>
         <p id="daily-load-error-msg">无法读取每日挑战题目。</p>
-        <p class="page-sub" style="text-align:center;margin-bottom:12px">
-          请将 <code style="font-size:12px">questions/每日挑战题目.docx</code> 放在项目目录，并使用本地服务器（非 file://）打开页面。
-        </p>
+        <p class="page-sub" style="text-align:center;margin-bottom:12px">题目已内嵌在页面中。若仍看到本提示，请刷新页面或返回首页重试。</p>
         <button type="button" class="btn-primary" id="btn-daily-retry-load">重试加载</button>
         <button type="button" class="btn-outline" style="margin-top:10px" data-nav="home">返回首页</button>
       </div>
@@ -1903,7 +1898,6 @@
     </button>
   </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
   <script>
 (function () {
   const ROUTES = {
@@ -2097,9 +2091,133 @@
     });
   }
 
-  /* —— 压强答题：docx → mammoth 纯文本 → 解析；两次机会计分；错题本见 wrongBookMain_* —— */
-  const DOCX_URL = "questions/压强题目.docx";
-  const DAILY_DOCX_URL = "questions/每日挑战题目.docx";
+  /* —— 压强答题：内嵌题目 JSON；两次机会计分；错题本见 wrongBookMain_* —— */
+  const PRESSURE_QUESTIONS_EMBEDDED = [
+    {
+      question: "马德堡半球实验主要说明了什么？",
+      options: ["大气压强的存在", "液体压强与深度有关", "浮力产生的原因", "分子间存在引力"],
+      answer: "A",
+      explanation: "半球实验是经典的大气压存在证明。",
+    },
+    {
+      question: "标准大气压约为多少？",
+      options: ["1.0×10⁵ Pa", "1.0×10³ Pa", "1.0×10⁷ Pa", "1 Pa"],
+      answer: "A",
+      explanation: "约 1.013×10⁵ Pa，常近似为 10⁵ Pa。",
+    },
+    {
+      question: "用吸管喝饮料，主要利用了？",
+      options: ["大气压", "液体压强", "重力", "摩擦力"],
+      answer: "A",
+      explanation: "吸气使管内气压降低，外界大气压把液体压入管内。",
+    },
+    {
+      question: "海拔升高，大气压强通常如何变化？",
+      options: ["减小", "增大", "不变", "先增后减"],
+      answer: "A",
+      explanation: "空气稀薄，气压随高度升高而降低。",
+    },
+    {
+      question: "托里拆利实验中，玻璃管内水银柱高度主要取决于？",
+      options: ["外界大气压", "玻璃管粗细", "水银槽形状", "管是否倾斜"],
+      answer: "A",
+      explanation: "水银柱产生的压强与外界大气压平衡。",
+    },
+    {
+      question: "高压锅内食物更容易煮熟，主要原因是？",
+      options: ["锅内气压高，沸点升高", "锅内气压低，沸点降低", "导热更快", "水量更多"],
+      answer: "A",
+      explanation: "气压升高，水的沸点升高。",
+    },
+    {
+      question: "钢笔吸墨水时，挤压橡皮管是为了？",
+      options: ["排出空气，利用大气压压入墨水", "增大摩擦力", "过滤杂质", "降温"],
+      answer: "A",
+      explanation: "先减小内部气压，再靠大气压把墨水压入。",
+    },
+    {
+      question: "离心式水泵抽水高度有限，主要受限于？",
+      options: ["当地大气压能支撑的水柱高度", "电机功率", "水管颜色", "水的密度变化"],
+      answer: "A",
+      explanation: "理论上大气压最多支撑约10.3m水柱（标准大气压）。",
+    },
+    {
+      question: "下列现象中与大气压无关的是？",
+      options: ["拦河坝上窄下宽", "吸盘吸附在玻璃上", "覆杯实验", "针筒抽取药液"],
+      answer: "A",
+      explanation: "拦河坝形状主要考虑液体压强随深度增大。",
+    },
+    {
+      question: "做托里拆利实验时，若玻璃管顶端开孔，水银柱会？",
+      options: ["下降直至与槽内液面相平", "继续升高", "不变", "喷出管外"],
+      answer: "A",
+      explanation: "顶端开孔后管内外都与大气相通，不再形成真空支撑。",
+    },
+  ];
+
+  const DAILY_QUESTIONS_EMBEDDED = [
+    {
+      question: "在国际单位制中，力的单位是？",
+      options: ["牛顿", "千克", "米每秒", "帕斯卡"],
+      answer: "A",
+      explanation: "牛顿（N）是力的单位。",
+    },
+    {
+      question: "光在同种均匀介质中沿什么路径传播？",
+      options: ["折线", "直线", "抛物线", "螺旋线"],
+      answer: "B",
+      explanation: "同种均匀介质中光沿直线传播。",
+    },
+    {
+      question: "声音的产生主要是因为？",
+      options: ["温度变化", "物体振动", "颜色变化", "体积膨胀"],
+      answer: "B",
+      explanation: "声音由物体振动产生。",
+    },
+    {
+      question: "下列环境中，声音最难传播的是？",
+      options: ["水中", "钢铁中", "真空中", "空气中"],
+      answer: "C",
+      explanation: "真空不能传声。",
+    },
+    {
+      question: "部分电路欧姆定律可写作？",
+      options: ["I=U/R", "I=UR", "U=IR²", "R=U²/I"],
+      answer: "A",
+      explanation: "I=U/R 为常见形式。",
+    },
+    {
+      question: "惯性的大小主要取决于物体的？",
+      options: ["速度", "质量", "温度", "形状"],
+      answer: "B",
+      explanation: "惯性大小只与质量有关。",
+    },
+    {
+      question: "在液体密度一定时，深度越大，液体压强？",
+      options: ["越小", "不变", "越大", "为零"],
+      answer: "C",
+      explanation: "p=ρgh，h 增大则 p 增大。",
+    },
+    {
+      question: "平面镜所成的像与物体到镜面的距离关系是？",
+      options: ["像更远", "相等", "物更远", "随机"],
+      answer: "B",
+      explanation: "像距等于物距。",
+    },
+    {
+      question: "两电阻串联后的总电阻 R 与各电阻关系为？",
+      options: ["R=R1·R2", "R=R1+R2", "R=R1/R2", "R=|R1-R2|"],
+      answer: "B",
+      explanation: "串联总电阻等于各电阻之和。",
+    },
+    {
+      question: "凸透镜对平行于主光轴的入射光具有？",
+      options: ["发散作用", "会聚作用", "全反射", "无偏折"],
+      answer: "B",
+      explanation: "凸透镜对光有会聚作用。",
+    },
+  ];
+
   let cachedParsedQuestions = null;
   let quizSession = null;
 
@@ -2715,16 +2833,7 @@
     fetchAndRenderLiveRanking(statusEl, scrollEl, meEl, { timeInStatus: true });
   }
 
-  /**
-   * 从 .docx（mammoth 提取的纯文本）解析得到的统一题目 JSON：
-   * {
-   *   "question": "题干",
-   *   "options": ["A选项全文", "B选项全文", "C选项全文", "D选项全文"],
-   *   "answer": "B",
-   *   "explanation": "解析"
-   * }
-   * 其中 answer 为正确选项字母 A/B/C/D（与 Word 中「正确答案：X」一致）。
-   */
+  /** 题目 JSON：answer 为正确选项字母 A/B/C/D */
   function answerLetter(q) {
     var a = String(q && q.answer != null ? q.answer : "").trim().toUpperCase();
     if (/^[ABCD]$/.test(a)) return a;
@@ -2738,100 +2847,18 @@
     return q.options[i] != null ? String(q.options[i]) : "";
   }
 
-  function parseQuestionsFromPlainText(text) {
-    const lines = text
-      .replace(/\r\n/g, "\n")
-      .split("\n")
-      .map(function (l) {
-        return l.trim();
-      })
-      .filter(function (l) {
-        return l.length > 0;
-      });
-    const qs = [];
-    const numRe = /^(\d{1,2})[\.\)、．]\s*(.+)$/;
-    const optRe = /^([ABCD])[\.、．]\s*(.+)$/;
-    const ansRe = /^(正确答案|答案)[:：]\s*([ABCD])\s*$/i;
-    const expRe = /^解析[:：]\s*(.*)$/;
-
-    let i = 0;
-    while (i < lines.length) {
-      const nm = lines[i].match(numRe);
-      if (!nm) {
-        i++;
-        continue;
-      }
-      const stem = nm[2];
-      i++;
-      const options = {};
-      while (i < lines.length) {
-        const om = lines[i].match(optRe);
-        if (!om) break;
-        options[om[1]] = om[2];
-        i++;
-      }
-      let answerKey = null;
-      if (i < lines.length) {
-        const am = lines[i].match(ansRe);
-        if (am) {
-          answerKey = am[2].toUpperCase();
-          i++;
-        }
-      }
-      let explanation = "";
-      if (i < lines.length) {
-        const em = lines[i].match(expRe);
-        if (em) {
-          explanation = em[1] || "";
-          i++;
-          while (i < lines.length && !numRe.test(lines[i])) {
-            const ln = lines[i];
-            if (optRe.test(ln) || ansRe.test(ln)) break;
-            explanation += (explanation ? "\n" : "") + ln;
-            i++;
-          }
-        }
-      }
-      if (answerKey && options.A && options.B && options.C && options.D) {
-        qs.push({
-          question: stem,
-          options: [options.A, options.B, options.C, options.D],
-          answer: answerKey,
-          explanation: explanation || "（本题暂无解析）",
-        });
-      }
-    }
-    return qs;
-  }
-
-  function loadDocxQuestions(docxUrl) {
-    if (typeof mammoth === "undefined") {
-      return Promise.reject(new Error("题目解析库未加载，请检查网络后刷新页面。"));
-    }
-    return fetch(docxUrl)
-      .then(function (res) {
-        if (!res.ok) {
-          throw new Error("找不到题目文件（HTTP " + res.status + "）。请将对应 .docx 放入 questions/ 目录，并使用 http(s) 访问。");
-        }
-        return res.arrayBuffer();
-      })
-      .then(function (buf) {
-        return mammoth.extractRawText({ arrayBuffer: buf });
-      })
-      .then(function (result) {
-        if (!result || !result.value) {
-          throw new Error("文档内容为空。");
-        }
-        const qs = parseQuestionsFromPlainText(result.value);
-        if (qs.length !== 10) {
-          throw new Error("解析得到 " + qs.length + " 道题，需要恰好 10 道。请确认每题含：编号题干、A-D 选项、正确答案、解析。");
-        }
-        return qs;
-      });
-  }
-
-  function loadQuestionsFromDocx() {
-    return loadDocxQuestions(DOCX_URL);
+  function cloneQuestionsEmbedded(list) {
+    return list.map(function (q) {
+      var ans = String(q && q.answer != null ? q.answer : "").trim().toUpperCase();
+      var mch = ans.match(/[ABCD]/);
+      var letter = /^[ABCD]$/.test(ans) ? ans : mch ? mch[0] : "A";
+      return {
+        question: String(q && q.question != null ? q.question : ""),
+        options: (q && q.options ? q.options : []).slice(0, 4),
+        answer: letter,
+        explanation: String(q && q.explanation != null ? q.explanation : "") || "（本题暂无解析）",
+      };
+    });
   }
 
   function elQuiz(id) {
@@ -2859,25 +2886,19 @@
 
   function onEnterQuiz() {
     resetQuizPanels();
-    if (cachedParsedQuestions && cachedParsedQuestions.length === 10) {
+    try {
+      var qs = cloneQuestionsEmbedded(PRESSURE_QUESTIONS_EMBEDDED);
+      if (qs.length !== 10) throw new Error("内嵌压强题目数量应为 10 道。");
+      cachedParsedQuestions = qs;
+      showQuizLoading(false);
+      showQuizLoadError(false);
       showQuizMain(true);
-      startQuizSession(cachedParsedQuestions);
-      return;
+      startQuizSession(qs);
+    } catch (e) {
+      console.error(e);
+      cachedParsedQuestions = null;
+      showQuizLoadError(true, (e && e.message) || String(e));
     }
-    showQuizLoading(true);
-    loadQuestionsFromDocx()
-      .then(function (qs) {
-        cachedParsedQuestions = qs;
-        showQuizLoading(false);
-        showQuizMain(true);
-        startQuizSession(qs);
-      })
-      .catch(function (e) {
-        console.error(e);
-        showQuizLoading(false);
-        cachedParsedQuestions = null;
-        showQuizLoadError(true, (e && e.message) || String(e));
-      });
   }
 
   function startQuizSession(questions) {
@@ -3099,7 +3120,7 @@
     }
   });
 
-  /* —— 每日挑战：60s、10 题、单选一次机会、docx 加载、云端排行 —— */
+  /* —— 每日挑战：60s、10 题、单选一次机会、内嵌题目、云端排行 —— */
   const DAILY_POINTS_CORRECT = 10;
 
   let dailyCachedQuestions = null;
@@ -3432,24 +3453,18 @@
     dailySettled = false;
     dailySession = null;
     resetDailyPanels();
-    if (dailyCachedQuestions && dailyCachedQuestions.length === 10) {
-      promptDoubleCardThenStart(dailyCachedQuestions);
-      return;
+    try {
+      var qs = cloneQuestionsEmbedded(DAILY_QUESTIONS_EMBEDDED);
+      if (qs.length !== 10) throw new Error("内嵌每日挑战题目数量应为 10 道。");
+      dailyCachedQuestions = qs;
+      elDaily("daily-load-error").classList.add("hidden");
+      promptDoubleCardThenStart(qs);
+    } catch (e) {
+      console.error(e);
+      dailyCachedQuestions = null;
+      elDaily("daily-load-error").classList.remove("hidden");
+      elDaily("daily-load-error-msg").textContent = (e && e.message) || String(e);
     }
-    elDaily("daily-loading").classList.remove("hidden");
-    loadDocxQuestions(DAILY_DOCX_URL)
-      .then(function (qs) {
-        dailyCachedQuestions = qs;
-        elDaily("daily-loading").classList.add("hidden");
-        promptDoubleCardThenStart(qs);
-      })
-      .catch(function (e) {
-        console.error(e);
-        dailyCachedQuestions = null;
-        elDaily("daily-loading").classList.add("hidden");
-        elDaily("daily-load-error").classList.remove("hidden");
-        elDaily("daily-load-error-msg").textContent = (e && e.message) || String(e);
-      });
   }
 
   elDaily("btn-daily-retry-load").addEventListener("click", function () {
