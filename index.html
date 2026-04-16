@@ -1,0 +1,4087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>初中物理游戏化学习 App</title>
+  <style>
+    :root {
+      --primary: #5eb8e8;
+      --primary-deep: #3a9ad6;
+      --bg-top: #ffffff;
+      --bg-bottom: #e3f2fd;
+      --mint: #7dd3c0;
+      --mint-soft: rgba(125, 211, 192, 0.35);
+      --yellow-soft: #fff8dc;
+      --yellow-border: #f5e6a8;
+      --accent-orange: #ff9f43;
+      --accent-orange-soft: rgba(255, 159, 67, 0.22);
+      --error-soft: #f5a5a5;
+      --error-bg: rgba(229, 115, 115, 0.12);
+      --success: #52c97b;
+      --success-bg: rgba(82, 201, 123, 0.15);
+      --text: #1e3a4d;
+      --text-secondary: #5a7a8f;
+      --card-shadow: 0 8px 28px rgba(62, 130, 180, 0.12);
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --tab-h: 58px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      /* 主内容区底部留白，避免被 fixed 底栏遮挡（略大于底栏视觉高度） */
+      --main-bottom-pad: 80px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 55%, #d4e9f7 100%);
+      background-attachment: fixed;
+    }
+
+    body {
+      min-height: 100dvh;
+      padding-bottom: 0;
+    }
+
+    body.island-mechanics-bg {
+      background: linear-gradient(180deg, #e8dfd6 0%, #c9b8a8 38%, #8b7a6e 100%);
+      background-attachment: fixed;
+    }
+
+    .app-shell {
+      max-width: 440px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: 10px 14px 0;
+    }
+
+    .main-content {
+      padding-bottom: calc(var(--main-bottom-pad) + var(--safe-bottom));
+    }
+
+    .view {
+      display: none;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--card-shadow);
+    }
+
+    .btn-ghost {
+      border: none;
+      background: rgba(94, 184, 232, 0.15);
+      color: var(--primary-deep);
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      width: 100%;
+      border: none;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 16px;
+      padding: 14px 20px;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(58, 154, 214, 0.35);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-accent {
+      border: none;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 11px 18px;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffb347, var(--accent-orange));
+      color: #fff;
+      box-shadow: 0 6px 18px var(--accent-orange-soft);
+    }
+
+    .btn-daily {
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, #ff8c42, #ff5e3a);
+      box-shadow: 0 8px 22px rgba(255, 94, 58, 0.42);
+      white-space: nowrap;
+    }
+
+    .btn-daily:active {
+      transform: scale(0.98);
+    }
+
+    /* —— 首页顶栏 —— */
+    .home-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 8px 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .home-avatar {
+      grid-row: 1 / span 2;
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #fff, var(--mint-soft));
+      border: 2px solid rgba(94, 184, 232, 0.45);
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .home-level-block {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .home-level {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary-deep);
+    }
+
+    .home-title-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .home-gold {
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 800;
+      font-size: 15px;
+      color: #b8860b;
+      background: var(--yellow-soft);
+      border: 1px solid var(--yellow-border);
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    .home-daily-wrap {
+      grid-column: 3;
+      grid-row: 2;
+      justify-self: end;
+      margin-top: 4px;
+    }
+
+    /* —— 大海地图 —— */
+    .ocean-map {
+      position: relative;
+      height: min(58vw, 300px);
+      max-height: 320px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: 12px;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% 100%, rgba(94, 184, 232, 0.55) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 50% at 20% 60%, rgba(125, 211, 192, 0.35) 0%, transparent 45%),
+        linear-gradient(180deg, #7ec8f0 0%, #4aa8de 42%, #2d8bc4 72%, #1a6fa8 100%);
+      box-shadow: inset 0 -20px 40px rgba(0, 60, 100, 0.15), var(--card-shadow);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .ocean-map::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath fill='rgba(255,255,255,0.12)' d='M0 12c20-8 40 8 60 0s40 8 60-2v14H0z'/%3E%3C/svg%3E") repeat-x;
+      background-size: 120px 24px;
+      opacity: 0.9;
+      animation: wave 8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes wave {
+      from { background-position: 0 70%; }
+      to { background-position: 120px 70%; }
+    }
+
+    .island-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-family: inherit;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: default;
+    }
+
+    .island-node .bubble {
+      min-width: 64px;
+      padding: 8px 10px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 6px 16px rgba(0, 80, 120, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.95);
+    }
+
+    .island-node .ico {
+      font-size: 28px;
+      line-height: 1;
+      display: block;
+    }
+
+    .island-node .name {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    .island-node.active .bubble {
+      border-color: rgba(255, 200, 80, 0.95);
+      box-shadow: 0 0 0 3px rgba(255, 200, 100, 0.45), 0 10px 24px rgba(255, 159, 67, 0.35);
+      background: linear-gradient(180deg, #fffef5, #fff);
+    }
+
+    .island-node.active {
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    .island-node.locked .bubble {
+      opacity: 0.48;
+      filter: grayscale(0.35);
+    }
+
+    .island-node.locked .lock {
+      font-size: 14px;
+      margin-top: 2px;
+      display: block;
+    }
+
+    .map-player {
+      position: absolute;
+      left: 28%;
+      top: 52%;
+      transform: translate(-50%, -100%);
+      font-size: 34px;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+      z-index: 6;
+      pointer-events: none;
+      animation: bob 2.2s ease-in-out infinite;
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translate(-50%, -100%) translateY(0); }
+      50% { transform: translate(-50%, -100%) translateY(-4px); }
+    }
+
+    .task-hint-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      background: rgba(94, 184, 232, 0.14);
+      border: 1px solid rgba(94, 184, 232, 0.28);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-deep);
+      margin-bottom: 14px;
+    }
+
+    .task-hint-bar span.ico {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    /* —— 力学岛场景 —— */
+    .mech-scene {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      min-height: 200px;
+      margin-bottom: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 40%),
+        linear-gradient(125deg, #6b5344 0%, #4a3f38 35%, #3d3530 70%, #2c2622 100%);
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .mech-scene::before,
+    .mech-scene::after {
+      content: "";
+      position: absolute;
+      border-radius: 40% 60% 55% 45%;
+      background: rgba(40, 32, 28, 0.45);
+      pointer-events: none;
+    }
+
+    .mech-scene::before {
+      width: 120%;
+      height: 45%;
+      left: -15%;
+      bottom: -8%;
+      transform: rotate(-4deg);
+    }
+
+    .mech-scene::after {
+      width: 80%;
+      height: 30%;
+      right: -20%;
+      bottom: 5%;
+      background: rgba(90, 70, 55, 0.35);
+    }
+
+    .mech-gear {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      border: 3px dashed rgba(255, 200, 120, 0.35);
+      border-radius: 50%;
+      top: 14%;
+      right: 12%;
+      opacity: 0.6;
+      animation: spin 12s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .mentor-row {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      padding: 16px 14px 14px;
+    }
+
+    .mentor-sprite {
+      flex-shrink: 0;
+      width: 88px;
+      height: 110px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.08));
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      display: grid;
+      place-items: center;
+      font-size: 56px;
+      line-height: 1;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .speech-bubble {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 14px 14px 14px 6px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .speech-bubble strong {
+      color: var(--primary-deep);
+    }
+
+    .task-detail-card {
+      padding: 18px 16px;
+      margin-bottom: 14px;
+    }
+
+    .task-detail-card h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary-deep);
+      margin-bottom: 12px;
+    }
+
+    .task-detail-list {
+      list-style: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      line-height: 1.85;
+    }
+
+    .task-detail-list li::before {
+      content: "· ";
+      color: var(--accent-orange);
+      font-weight: 800;
+    }
+
+    .video-panel {
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .video-panel h4 {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .video-wrap {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #111;
+      aspect-ratio: 16 / 9;
+      border: 2px solid rgba(94, 184, 232, 0.35);
+    }
+
+    .video-wrap video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .video-progress-hint {
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .video-progress-hint.done {
+      color: var(--success);
+    }
+
+    .btn-skip-video {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 12px;
+      border-radius: var(--radius-md);
+      border: 1px dashed rgba(94, 184, 232, 0.5);
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .island-page-head {
+      margin-bottom: 12px;
+    }
+
+    .island-page-head .back-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .island-page-head h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .island-page-head .sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-orange);
+      margin-top: 2px;
+    }
+
+    .hint-bar {
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .hint-bar.success {
+      background: var(--success-bg);
+      color: #2d7a4a;
+      border: 1px solid rgba(82, 201, 123, 0.35);
+    }
+
+    .hint-bar.error {
+      background: var(--error-bg);
+      color: #a34e4e;
+      border: 1px solid rgba(229, 115, 115, 0.25);
+    }
+
+    .hint-bar.info {
+      background: rgba(94, 184, 232, 0.12);
+      color: var(--primary-deep);
+      border: 1px solid rgba(94, 184, 232, 0.25);
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .page-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .placeholder-block {
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .tag-soon {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--yellow-soft);
+      border: 1px solid var(--yellow-border);
+      color: #8a6d2e;
+    }
+
+    .modal-slot {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+      display: none;
+    }
+
+    .modal-slot .inner {
+      max-width: 300px;
+      padding: 20px;
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px dashed rgba(94, 184, 232, 0.5);
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .tab-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      max-width: 440px;
+      margin: 0 auto;
+      height: calc(var(--tab-h) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(94, 184, 232, 0.2);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 8px;
+      box-shadow: 0 -6px 24px rgba(62, 130, 180, 0.08);
+    }
+
+    .tab-item {
+      flex: 1;
+      max-width: 25%;
+      border: none;
+      background: none;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 4px 2px;
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .tab-item .ico {
+      font-size: 22px;
+      line-height: 1;
+      opacity: 0.75;
+    }
+
+    .tab-item.active {
+      color: var(--primary-deep);
+    }
+
+    .tab-item.active .ico {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+
+    /* —— 压强答题页 —— */
+    .quiz-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-top: 4px;
+    }
+
+    .quiz-top-mid {
+      flex: 1;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .quiz-progress {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary-deep);
+    }
+
+    .quiz-score-pill {
+      font-size: 12px;
+      font-weight: 800;
+      color: #b8860b;
+      background: var(--yellow-soft);
+      border: 1px solid var(--yellow-border);
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .quiz-loading,
+    .quiz-load-error {
+      padding: 28px 16px;
+      text-align: center;
+    }
+
+    .quiz-load-error h3 {
+      font-size: 16px;
+      color: #a34e4e;
+      margin-bottom: 10px;
+    }
+
+    .quiz-load-error p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .quiz-spinner {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      border: 3px solid rgba(94, 184, 232, 0.25);
+      border-top-color: var(--primary-deep);
+      animation: spin 0.9s linear infinite;
+    }
+
+    .quiz-stem-card {
+      padding: 18px 16px;
+      margin-bottom: 12px;
+    }
+
+    .quiz-stem {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .quiz-opt {
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      border: 2px solid rgba(94, 184, 232, 0.28);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, opacity 0.2s;
+    }
+
+    .quiz-opt:hover:not(:disabled) {
+      border-color: var(--primary-deep);
+      transform: translateX(2px);
+    }
+
+    .quiz-opt:disabled {
+      cursor: default;
+      opacity: 0.55;
+    }
+
+    .quiz-opt.picked-wrong {
+      border-color: #e57373;
+      background: var(--error-bg);
+    }
+
+    .quiz-opt.picked-right {
+      border-color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .quiz-opt.reveal-correct {
+      border-color: var(--success);
+      box-shadow: 0 0 0 2px rgba(82, 201, 123, 0.35);
+    }
+
+    .quiz-status {
+      min-height: 22px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .quiz-status.ok {
+      color: #2d7a4a;
+    }
+
+    .quiz-status.bad {
+      color: #a34e4e;
+    }
+
+    .quiz-feedback-card {
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(94, 184, 232, 0.22);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .quiz-feedback-card strong {
+      color: var(--text);
+    }
+
+    .quiz-feedback-title {
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--primary-deep);
+    }
+
+    .btn-next-q {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .quiz-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(30, 58, 77, 0.48);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .quiz-modal-overlay.open {
+      display: flex;
+    }
+
+    .quiz-settle-card {
+      max-width: 360px;
+      width: 100%;
+      padding: 22px 18px;
+      text-align: center;
+    }
+
+    .quiz-settle-card h2 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--primary-deep);
+    }
+
+    .quiz-settle-stat {
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      line-height: 1.85;
+      margin: 12px 0;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(94, 184, 232, 0.08);
+    }
+
+    .quiz-settle-bonus {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--yellow-soft);
+      border: 1px solid var(--yellow-border);
+      font-size: 13px;
+      font-weight: 700;
+      color: #8a6d2e;
+    }
+
+    .quiz-settle-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* —— 每日挑战 —— */
+    .daily-header-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-top: 4px;
+    }
+
+    .daily-title-block {
+      flex: 1;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .daily-title-block h2 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .daily-timer {
+      font-size: 22px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-orange);
+      min-width: 44px;
+      text-align: right;
+      text-shadow: 0 0 12px rgba(255, 159, 67, 0.35);
+    }
+
+    .daily-timer.warn {
+      color: #e53935;
+    }
+
+    .daily-leader-card {
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+
+    .daily-leader-card h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .daily-leader-list {
+      list-style: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    .daily-leader-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(94, 184, 232, 0.12);
+    }
+
+    .daily-leader-list li:last-child {
+      border-bottom: none;
+    }
+
+    .daily-bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      background: rgba(94, 184, 232, 0.1);
+      border: 1px solid rgba(94, 184, 232, 0.22);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-deep);
+    }
+
+    .daily-feedback {
+      min-height: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 8px 0 4px;
+      color: var(--text-secondary);
+    }
+
+    .daily-feedback.ok {
+      color: #2d7a4a;
+    }
+
+    .daily-feedback.bad {
+      color: #a34e4e;
+    }
+
+    .daily-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 85;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(30, 58, 77, 0.48);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .daily-modal-overlay.open {
+      display: flex;
+    }
+
+    .daily-settle-card {
+      max-width: 380px;
+      width: 100%;
+      padding: 20px 16px 18px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .daily-settle-card h3 {
+      font-size: 19px;
+      font-weight: 800;
+      text-align: center;
+      color: var(--primary-deep);
+      margin-bottom: 12px;
+    }
+
+    .daily-settle-summary {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .daily-settle-board {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: rgba(94, 184, 232, 0.08);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .daily-settle-board h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary-deep);
+      margin-bottom: 8px;
+    }
+
+    .daily-settle-rank-me {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--accent-orange);
+    }
+
+    .btn-outline {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-lg);
+      border: 2px solid rgba(94, 184, 232, 0.45);
+      background: rgba(255, 255, 255, 0.85);
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--primary-deep);
+      cursor: pointer;
+    }
+
+    /* —— 我的 · 形象预设 —— */
+    .profile-preview-wrap {
+      padding: 20px 18px 18px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .profile-preview-caption {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .profile-preview-large {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 12px;
+      border-radius: 32px;
+      display: grid;
+      place-items: center;
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      box-shadow: var(--card-shadow);
+      transition: background 0.35s ease, transform 0.2s ease;
+    }
+
+    .profile-preview-emoji {
+      font-size: 72px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+    }
+
+    .profile-preview-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary-deep);
+    }
+
+    .profile-preset-panel {
+      padding: 18px 16px 20px;
+    }
+
+    .profile-section-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .preset-card {
+      border: 2px solid rgba(94, 184, 232, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 12px 10px;
+      background: rgba(255, 255, 255, 0.65);
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .preset-card:hover {
+      border-color: rgba(94, 184, 232, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .preset-card.active {
+      border-color: var(--primary-deep);
+      box-shadow: 0 0 0 3px rgba(94, 184, 232, 0.25);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .preset-icon-wrap {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 8px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .preset-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .profile-hint {
+      min-height: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--success);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .profile-action-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .profile-user-card {
+      padding: 16px 16px 18px;
+      margin-bottom: 14px;
+    }
+
+    .profile-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .nick-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .profile-nick-input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      border: 2px solid rgba(94, 184, 232, 0.35);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .profile-stat-line {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.85;
+      font-weight: 600;
+    }
+
+    .profile-mock-card {
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .profile-mock-card h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary-deep);
+      margin-bottom: 10px;
+    }
+
+    .profile-mock-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 6px;
+    }
+
+    .btn-profile-card-action {
+      margin-top: 12px;
+      width: 100%;
+    }
+
+    .profile-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 88;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding-bottom: calc(20px + var(--main-bottom-pad));
+      background: rgba(30, 58, 77, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .profile-modal-overlay.open {
+      display: flex;
+    }
+
+    .profile-modal-card {
+      max-width: 400px;
+      width: 100%;
+      max-height: 82vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 16px 16px;
+      box-shadow: 0 16px 48px rgba(30, 58, 77, 0.22);
+    }
+
+    .profile-modal-card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      color: var(--primary-deep);
+      margin-bottom: 12px;
+    }
+
+    .profile-modal-scroll {
+      overflow-y: auto;
+      flex: 1;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .profile-report-stat {
+      background: rgba(94, 184, 232, 0.1);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .profile-suggest-box {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 193, 120, 0.2);
+      border: 1px solid rgba(255, 160, 80, 0.35);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-deep);
+    }
+
+    .wrong-item-card {
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(94, 184, 232, 0.25);
+      text-align: left;
+    }
+
+    .wrong-item-card h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary-deep);
+      margin-bottom: 6px;
+    }
+
+    .wrong-item-meta {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .wrong-item-remove {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      border: 2px solid rgba(163, 78, 78, 0.35);
+      background: rgba(255, 255, 255, 0.9);
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 13px;
+      color: #a34e4e;
+      cursor: pointer;
+    }
+
+    .btn-ranking-header {
+      width: 100%;
+      margin-top: 8px;
+      order: 4;
+      padding: 10px 14px;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 14px;
+      border-radius: var(--radius-lg);
+      border: 2px solid rgba(94, 184, 232, 0.45);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--primary-deep);
+      cursor: pointer;
+    }
+
+    .rank-api-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(30, 58, 77, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .rank-api-overlay.open {
+      display: flex;
+    }
+
+    .rank-api-card {
+      max-width: 400px;
+      width: 100%;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 16px 16px;
+    }
+
+    .rank-api-card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      color: var(--primary-deep);
+      margin-bottom: 10px;
+    }
+
+    .rank-api-scroll {
+      overflow-y: auto;
+      flex: 1;
+      margin: 8px 0 12px;
+      font-size: 13px;
+    }
+
+    .rank-api-scroll table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .rank-api-scroll th,
+    .rank-api-scroll td {
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid rgba(94, 184, 232, 0.15);
+    }
+
+    .rank-api-scroll th {
+      font-weight: 800;
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+
+    .rank-api-me {
+      text-align: center;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--accent-orange);
+      padding: 8px 0;
+    }
+
+    .rank-page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-top: 4px;
+    }
+
+    .rank-page-card {
+      padding: 14px 16px 16px;
+    }
+
+    .bag-item-card {
+      padding: 18px 16px 16px;
+      margin-bottom: 12px;
+    }
+
+    .bag-item-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .bag-item-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      background: linear-gradient(145deg, #ffe8b8, #ffc266);
+      box-shadow: 0 6px 16px rgba(255, 160, 80, 0.25);
+    }
+
+    .bag-item-name {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary-deep);
+    }
+
+    .bag-item-meta {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .bag-item-desc {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.65;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .audio-mute-fab {
+      position: fixed;
+      right: 12px;
+      bottom: calc(var(--tab-h) + var(--safe-bottom) + 12px);
+      z-index: 96;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 2px solid rgba(94, 184, 232, 0.55);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--card-shadow);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .audio-mute-fab:active {
+      transform: scale(0.94);
+    }
+  </style>
+</head>
+<body>
+  <button type="button" id="btn-audio-mute" class="audio-mute-fab" aria-label="切换静音" title="静音" aria-pressed="false">🔊</button>
+  <audio id="bgm-relax-audio" src="./bgm.mp3" loop preload="metadata" playsinline style="display:none" aria-hidden="true"></audio>
+  <audio id="bgm-daily-audio" src="./每日挑战bgm.mp3" loop preload="metadata" playsinline style="display:none" aria-hidden="true"></audio>
+  <div class="app-shell">
+    <div class="main-content">
+    <!-- 1 首页地图 -->
+    <section id="view-home" class="view active" aria-label="首页地图">
+      <div class="home-top">
+        <div class="home-avatar" id="home-avatar-icon" aria-hidden="true" title="用户头像">⛵</div>
+        <div class="home-level-block">
+          <div class="home-level">Lv.5</div>
+          <div class="home-title-badge">海域学徒</div>
+        </div>
+        <div class="home-gold" aria-label="金币">
+          <span aria-hidden="true">🪙</span>
+          <span id="home-gold-display">3280</span>
+        </div>
+        <div class="home-daily-wrap">
+          <button type="button" class="btn-daily" id="btn-home-daily" data-nav="daily">⚡ 每日挑战</button>
+        </div>
+      </div>
+
+      <div class="ocean-map" aria-label="群岛地图">
+        <!-- 力学岛：可点，小人站位 -->
+        <button type="button" class="island-node active" id="island-mechanics" data-nav="island" style="left:28%;top:52%" aria-label="进入力学岛压强试炼">
+          <div class="bubble">
+            <span class="ico" aria-hidden="true">⚙️</span>
+            <span class="name">力学岛</span>
+          </div>
+        </button>
+        <div class="map-player" aria-hidden="true">🧗</div>
+
+        <div class="island-node locked" style="left:62%;top:28%" aria-hidden="true">
+          <div class="bubble">
+            <span class="ico">🌡️</span>
+            <span class="name">热学岛</span>
+            <span class="lock">🔒</span>
+          </div>
+        </div>
+        <div class="island-node locked" style="left:48%;top:22%" aria-hidden="true">
+          <div class="bubble">
+            <span class="ico">🔮</span>
+            <span class="name">光学岛</span>
+            <span class="lock">🔒</span>
+          </div>
+        </div>
+        <div class="island-node locked" style="left:78%;top:48%" aria-hidden="true">
+          <div class="bubble">
+            <span class="ico">🔉</span>
+            <span class="name">声学岛</span>
+            <span class="lock">🔒</span>
+          </div>
+        </div>
+        <div class="island-node locked" style="left:72%;top:72%" aria-hidden="true">
+          <div class="bubble">
+            <span class="ico">⚡</span>
+            <span class="name">电学岛</span>
+            <span class="lock">🔒</span>
+          </div>
+        </div>
+        <div class="island-node locked" style="left:42%;top:78%" aria-hidden="true" title="实验岛 / 综合岛">
+          <div class="bubble">
+            <span class="ico">🧪</span>
+            <span class="name">实验/综合</span>
+            <span class="lock">🔒</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-hint-bar">
+        <span class="ico" aria-hidden="true">📜</span>
+        <span>当前任务：前往力学岛，完成压强试炼</span>
+      </div>
+    </section>
+
+    <!-- 2 力学岛 / 压强任务 -->
+    <section id="view-island" class="view" aria-label="力学岛压强任务">
+      <div class="island-page-head">
+        <div class="back-row">
+          <button type="button" class="btn-ghost" id="btn-island-back" data-nav="home">← 返回</button>
+        </div>
+        <h1>力学岛</h1>
+        <p class="sub">压强试炼</p>
+      </div>
+
+      <div class="mech-scene" aria-hidden="false">
+        <div class="mech-gear" aria-hidden="true"></div>
+        <div class="mentor-row">
+          <div class="mentor-sprite" title="导师立绘">🧑‍🔧</div>
+          <div class="speech-bubble" id="mentor-speech">
+            欢迎来到裂谷机关区！压强与<strong>压力</strong>、<strong>受力面积</strong>息息相关。请先看教学视频，再挑战十道压强题。
+          </div>
+        </div>
+      </div>
+
+      <div class="card task-detail-card">
+        <h3>任务名称：压强试炼</h3>
+        <ul class="task-detail-list">
+          <li>学习方式：观看视频 + 完成 10 道题</li>
+          <li>通关条件：80 分及以上</li>
+          <li>满分奖励：100 分额外奖励</li>
+        </ul>
+      </div>
+
+      <div class="card video-panel">
+        <h4>教学视频</h4>
+        <div class="video-wrap">
+          <video id="pressure-lesson-video" src="./压强教学视频.mp4" controls playsinline preload="metadata"></video>
+        </div>
+        <p class="video-progress-hint" id="video-progress-hint">视频进度：未完成播放，「开始答题」暂不可用</p>
+        <button type="button" class="btn-skip-video hidden" id="btn-skip-video">视频无法加载时跳过（演示）</button>
+        <button type="button" class="btn-primary" id="btn-start-quiz" style="margin-top:14px" disabled>开始答题</button>
+      </div>
+    </section>
+
+    <!-- 3 压强答题 -->
+    <section id="view-quiz" class="view" aria-label="压强答题">
+      <div id="quiz-load-error" class="card quiz-load-error hidden">
+        <h3>题目加载失败</h3>
+        <p id="quiz-load-error-msg">无法读取题目文件。</p>
+        <p class="page-sub" style="text-align:center;margin-bottom:12px">题目已内嵌在页面中。若仍看到本提示，请刷新页面或返回任务页重试。</p>
+        <button type="button" class="btn-primary" id="btn-quiz-retry-load">重试加载</button>
+        <button type="button" class="btn-outline" style="margin-top:10px" data-nav="island">返回任务</button>
+      </div>
+
+      <div id="quiz-loading" class="card quiz-loading hidden">
+        <div class="quiz-spinner" aria-hidden="true"></div>
+        <p style="font-weight:700;color:var(--primary-deep)">正在准备题目…</p>
+      </div>
+
+      <div id="quiz-main" class="hidden">
+        <div class="quiz-top">
+          <button type="button" class="btn-ghost" id="btn-quiz-back" data-nav="island">← 返回</button>
+          <div class="quiz-top-mid">
+            <div class="quiz-progress" id="quiz-progress-text">第 1 题 / 共 10 题</div>
+          </div>
+          <div class="quiz-score-pill">得分 <span id="quiz-score-val">0</span></div>
+        </div>
+
+        <div class="card quiz-stem-card">
+          <p class="quiz-stem" id="quiz-stem"></p>
+        </div>
+
+        <div class="quiz-options" id="quiz-options" role="group" aria-label="选项"></div>
+
+        <p class="quiz-status" id="quiz-status-line" aria-live="polite"></p>
+
+        <div id="quiz-feedback-wrap" class="hidden">
+          <div class="card quiz-feedback-card" id="quiz-feedback-card">
+            <div class="quiz-feedback-title" id="quiz-feedback-title">解析</div>
+            <div id="quiz-feedback-body"></div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary btn-next-q hidden" id="btn-quiz-next">下一题</button>
+      </div>
+    </section>
+
+    <div id="quiz-settle-overlay" class="quiz-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="quiz-settle-title">
+      <div class="card quiz-settle-card">
+        <h2 id="quiz-settle-title">试炼结算</h2>
+        <div class="quiz-settle-stat" id="quiz-settle-body"></div>
+        <div id="quiz-settle-bonus" class="quiz-settle-bonus hidden"></div>
+        <div class="quiz-settle-actions">
+          <button type="button" class="btn-primary" id="btn-quiz-settle-home" data-nav="home">返回首页</button>
+          <button type="button" class="btn-outline" id="btn-quiz-settle-retry">再挑战一次</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 每日挑战 -->
+    <section id="view-daily" class="view" aria-label="每日挑战">
+      <div id="daily-load-error" class="card quiz-load-error hidden">
+        <h3>题目加载失败</h3>
+        <p id="daily-load-error-msg">无法读取每日挑战题目。</p>
+        <p class="page-sub" style="text-align:center;margin-bottom:12px">题目已内嵌在页面中。若仍看到本提示，请刷新页面或返回首页重试。</p>
+        <button type="button" class="btn-primary" id="btn-daily-retry-load">重试加载</button>
+        <button type="button" class="btn-outline" style="margin-top:10px" data-nav="home">返回首页</button>
+      </div>
+
+      <div id="daily-loading" class="card quiz-loading hidden">
+        <div class="quiz-spinner" aria-hidden="true"></div>
+        <p style="font-weight:700;color:var(--primary-deep)">正在加载每日挑战题目…</p>
+      </div>
+
+      <div id="daily-main" class="hidden">
+        <div class="daily-header-row">
+          <button type="button" class="btn-ghost" data-nav="home">← 返回</button>
+          <div class="daily-title-block">
+            <h2>每日挑战</h2>
+          </div>
+          <div class="daily-timer" id="daily-timer-display" aria-live="polite">60</div>
+          <button type="button" class="btn-ranking-header" id="btn-daily-open-ranking">📊 排行榜（云端 TOP10）</button>
+        </div>
+
+        <div id="daily-double-active-hint" class="card hint-bar hidden" style="margin-bottom:10px;font-size:12px;line-height:1.55;padding:10px 14px;background:rgba(255,193,120,0.25);border:1px solid rgba(255,160,80,0.45);font-weight:800;color:var(--primary-deep)">
+          本场已使用「双倍积分卡」：结算与上传排行榜的得分将按<strong>基础分×2</strong>计算。
+        </div>
+        <div class="card hint-bar info" style="margin-bottom:12px;font-size:12px;line-height:1.55;padding:12px 14px">
+          结算后将<strong>自动提交分数</strong>到服务器。点「排行榜」实时拉取全服前 10 名与我的排名（需配置下方脚本中的 <code style="font-size:11px">API_BASE</code>）。
+        </div>
+
+        <div class="card quiz-stem-card">
+          <p class="quiz-stem" id="daily-stem"></p>
+        </div>
+        <div class="quiz-options" id="daily-options" role="group" aria-label="选项"></div>
+        <p class="daily-feedback" id="daily-feedback" aria-live="polite"></p>
+        <div class="daily-bottom-bar">
+          <span>当前得分：<strong id="daily-score-val">0</strong></span>
+          <span>当前题号：<strong id="daily-q-num">1</strong> / 10</span>
+        </div>
+      </div>
+    </section>
+
+    <div id="daily-settle-overlay" class="daily-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="daily-settle-title">
+      <div class="card daily-settle-card">
+        <h3 id="daily-settle-title">每日挑战结算</h3>
+        <div class="daily-settle-summary" id="daily-settle-summary"></div>
+        <p id="daily-settle-submit-status" class="page-sub" style="text-align:center;min-height:44px;margin-top:4px;font-weight:600"></p>
+        <div id="daily-settle-rank-line" class="daily-settle-rank-me" style="display:none;margin-bottom:8px"></div>
+        <div class="quiz-settle-actions" style="margin-top:14px">
+          <button type="button" class="btn-primary" data-nav="home">返回首页</button>
+          <button type="button" class="btn-outline" id="btn-daily-settle-retry">再挑战一次</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="daily-ranking-overlay" class="rank-api-overlay" role="dialog" aria-modal="true" aria-labelledby="daily-ranking-title">
+      <div class="card rank-api-card">
+        <h3 id="daily-ranking-title">每日挑战 · 排行榜</h3>
+        <p id="daily-ranking-status" class="page-sub" style="text-align:center;margin-bottom:6px;font-size:12px"></p>
+        <div class="rank-api-scroll" id="daily-ranking-scroll"></div>
+        <div class="rank-api-me" id="daily-ranking-my-rank"></div>
+        <button type="button" class="btn-primary" id="btn-daily-ranking-close">关闭</button>
+      </div>
+    </div>
+
+    <div id="daily-double-prompt-overlay" class="daily-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="daily-double-prompt-title" style="z-index: 87">
+      <div class="card daily-settle-card">
+        <h3 id="daily-double-prompt-title">双倍积分卡</h3>
+        <p id="daily-double-prompt-msg" class="page-sub" style="text-align:left;line-height:1.6;margin-bottom:16px;font-size:13px"></p>
+        <div class="quiz-settle-actions" style="margin-top:0">
+          <button type="button" class="btn-primary" id="btn-daily-double-use">使用 1 张并开始</button>
+          <button type="button" class="btn-outline" id="btn-daily-double-skip">不使用，直接开始</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 排行 -->
+    <section id="view-rank" class="view" aria-label="排行榜">
+      <header class="rank-page-header">
+        <div>
+          <h1 class="page-title">排行</h1>
+          <p class="page-sub">每日挑战 · 云端实时 TOP10</p>
+        </div>
+        <button type="button" class="btn-ghost" id="btn-rank-refresh" aria-label="刷新排行榜">刷新</button>
+      </header>
+      <div class="card rank-page-card">
+        <p id="rank-page-status" class="page-sub" style="text-align:center;margin-bottom:8px;font-size:12px;min-height:22px;font-weight:600"></p>
+        <div id="rank-page-scroll" class="rank-api-scroll" style="max-height:min(52vh,440px)"></div>
+        <div id="rank-page-my-rank" class="rank-api-me"></div>
+      </div>
+    </section>
+
+    <!-- 6 背包 -->
+    <section id="view-bag" class="view" aria-label="背包">
+      <header style="margin-bottom:14px;padding-top:4px">
+        <h1 class="page-title">背包</h1>
+        <p class="page-sub">道具 · 本地存储</p>
+      </header>
+      <div class="card bag-item-card">
+        <div class="bag-item-head">
+          <span class="bag-item-icon" aria-hidden="true">⚡</span>
+          <div>
+            <h3 class="bag-item-name">双倍积分卡</h3>
+            <p class="bag-item-meta">持有数量：<strong id="bag-double-count">0</strong> 张</p>
+          </div>
+        </div>
+        <p class="bag-item-desc">
+          效果：在每日挑战<strong>开始前</strong>选择使用后，<strong>当场</strong>结算得分与提交排行榜的分数按<strong>基础分×2</strong>计算（仅生效一次）。每日挑战得分≥80 分可获得 1 张，同一天最多获得 1 张。
+        </p>
+        <button type="button" class="btn-primary" id="btn-bag-arm-double" style="width:100%;margin-top:12px;display:none">
+          为下场每日挑战准备使用 1 张
+        </button>
+        <p id="bag-arm-hint" class="page-sub" style="margin-top:10px;text-align:center;font-size:11px;display:none"></p>
+      </div>
+    </section>
+
+    <!-- 7 我的 -->
+    <section id="view-profile" class="view" aria-label="我的">
+      <header style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;padding-top:4px">
+        <div>
+          <h1 class="page-title">我的</h1>
+          <p class="page-sub">形象 DIY · 学习档案</p>
+        </div>
+        <button type="button" class="btn-ghost" data-nav="home">地图</button>
+      </header>
+
+      <div class="card profile-user-card">
+        <h3 class="profile-section-title">用户信息</h3>
+        <label class="profile-label" for="profile-nickname-input">昵称（用于每日挑战成绩上传）</label>
+        <div class="nick-input-row">
+          <input type="text" id="profile-nickname-input" class="profile-nick-input" maxlength="16" placeholder="输入昵称" autocomplete="nickname" />
+          <button type="button" class="btn-ghost" id="btn-save-nickname">保存</button>
+        </div>
+        <p class="profile-stat-line">等级：<strong>Lv.5</strong>　称号：<strong>海域学徒</strong></p>
+        <p class="profile-stat-line">金币：<strong id="profile-gold-display">3280</strong>（与首页同步）</p>
+        <p class="profile-stat-line">已解锁岛屿：<strong id="profile-islands-unlocked">力学岛</strong>（其余岛屿待版本更新）</p>
+      </div>
+
+      <div class="card profile-preview-wrap">
+        <p class="profile-preview-caption">当前形象预览</p>
+        <div id="profile-avatar-preview" class="profile-preview-large" aria-hidden="true">
+          <span class="profile-preview-emoji" id="profile-preview-emoji">⛵</span>
+        </div>
+        <p class="profile-preview-title" id="profile-preview-name">小航海家</p>
+        <p class="page-sub" style="text-align:center;margin-top:6px">探险家 Lv.5</p>
+      </div>
+      <div class="card profile-preset-panel">
+        <h3 class="profile-section-title">选择角色形象</h3>
+        <p class="page-sub" style="margin-bottom:12px">四套完整形象，点击即可预览；保存后首页头像同步。</p>
+        <div class="preset-grid" id="preset-grid" role="list">
+          <button type="button" class="preset-card active" data-preset-id="sailor" aria-pressed="true">
+            <span class="preset-icon-wrap" style="background:linear-gradient(145deg,#b8e8ff,#5eb8e8)">⛵</span>
+            <span class="preset-name">小航海家</span>
+          </button>
+          <button type="button" class="preset-card" data-preset-id="mechanic" aria-pressed="false">
+            <span class="preset-icon-wrap" style="background:linear-gradient(145deg,#e8ddd4,#9a8a7a)">🔧</span>
+            <span class="preset-name">机械学徒</span>
+          </button>
+          <button type="button" class="preset-card" data-preset-id="knight" aria-pressed="false">
+            <span class="preset-icon-wrap" style="background:linear-gradient(145deg,#c5ddf0,#4a7aa8)">🛡️</span>
+            <span class="preset-name">浪花骑士</span>
+          </button>
+          <button type="button" class="preset-card" data-preset-id="mage" aria-pressed="false">
+            <span class="preset-icon-wrap" style="background:linear-gradient(145deg,#d4c4f7,#7c6bb8)">🌩️</span>
+            <span class="preset-name">风暴术士</span>
+          </button>
+        </div>
+        <p class="profile-hint" id="profile-save-hint" aria-live="polite"></p>
+        <div class="profile-action-row">
+          <button type="button" class="btn-primary" id="btn-save-avatar">保存形象</button>
+          <button type="button" class="btn-outline" id="btn-reset-avatar">恢复默认</button>
+        </div>
+      </div>
+
+      <div class="card profile-mock-card">
+        <h3>学习报告</h3>
+        <p id="profile-report-preview" class="page-sub" style="margin-bottom:10px">本周数据加载中…</p>
+        <button type="button" class="btn-outline btn-profile-card-action" id="btn-open-study-report">查看学习报告</button>
+      </div>
+
+      <div class="card profile-mock-card">
+        <h3>连续打卡</h3>
+        <div id="profile-checkin-body">
+          <p class="page-sub">加载中…</p>
+        </div>
+      </div>
+
+      <div class="card profile-mock-card">
+        <h3>错题本</h3>
+        <p id="profile-wrongbook-preview" class="page-sub" style="margin-bottom:10px">主线错题将显示在这里</p>
+        <button type="button" class="btn-outline btn-profile-card-action" id="btn-open-wrongbook">打开错题本</button>
+      </div>
+    </section>
+
+    <div id="profile-report-overlay" class="profile-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-report-title">
+      <div class="card profile-modal-card">
+        <h3 id="profile-report-title">学习报告</h3>
+        <div class="profile-modal-scroll" id="profile-report-content"></div>
+        <button type="button" class="btn-primary" id="btn-profile-report-close">关闭</button>
+      </div>
+    </div>
+
+    <div id="profile-wrongbook-overlay" class="profile-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-wrongbook-title">
+      <div class="card profile-modal-card">
+        <h3 id="profile-wrongbook-title">错题本（主线）</h3>
+        <div class="profile-modal-scroll" id="profile-wrongbook-content"></div>
+        <button type="button" class="btn-primary" id="btn-profile-wrongbook-close">关闭</button>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div id="modal-main-slot" class="modal-slot" aria-hidden="true">
+    <div class="inner">主线结算占位</div>
+  </div>
+  <div id="modal-daily-slot" class="modal-slot" aria-hidden="true">
+    <div class="inner">每日结算占位</div>
+  </div>
+
+  <nav class="tab-bar" aria-label="主导航">
+    <button type="button" class="tab-item active" data-nav="home" data-route="home" data-tab="1">
+      <span class="ico" aria-hidden="true">🏠</span>
+      首页
+    </button>
+    <button type="button" class="tab-item" data-nav="rank" data-route="rank" data-tab="1">
+      <span class="ico" aria-hidden="true">🏆</span>
+      排行
+    </button>
+    <button type="button" class="tab-item" data-nav="bag" data-route="bag" data-tab="1">
+      <span class="ico" aria-hidden="true">🎒</span>
+      背包
+    </button>
+    <button type="button" class="tab-item" data-nav="profile" data-route="profile" data-tab="1">
+      <span class="ico" aria-hidden="true">👤</span>
+      我的
+    </button>
+  </nav>
+
+  <script>
+(function () {
+  const ROUTES = {
+    home: "view-home",
+    island: "view-island",
+    quiz: "view-quiz",
+    daily: "view-daily",
+    profile: "view-profile",
+    rank: "view-rank",
+    bag: "view-bag",
+  };
+
+  const HASH = {
+    home: "#/",
+    island: "#/island",
+    quiz: "#/quiz",
+    daily: "#/daily",
+    profile: "#/profile",
+    rank: "#/rank",
+    bag: "#/bag",
+  };
+
+  /** 将此处替换为你的 Google Apps Script Web 应用部署 URL（/exec 结尾） */
+  const API_BASE =
+    "https://script.google.com/macros/s/AKfycby508eTs7IfPIkre-lNL-MbR_AcaqmHRl18OkbUaxLoeIqnH2TmwhS8V7oAgGi31Nbm/exec";
+
+  const TAB_ROUTES = new Set(["home", "rank", "bag", "profile"]);
+
+  let dailyTimerId = null;
+  function stopDailyTimer() {
+    if (dailyTimerId) {
+      clearInterval(dailyTimerId);
+      dailyTimerId = null;
+    }
+  }
+
+  function parseHash() {
+    const raw = (location.hash || "#/").replace(/^#\/?/, "").toLowerCase();
+    if (raw === "" || raw === "home") return "home";
+    if (raw === "island" || raw.startsWith("island")) return "island";
+    if (raw === "quiz" || raw.startsWith("quiz")) return "quiz";
+    if (raw === "daily" || raw.startsWith("daily")) return "daily";
+    if (raw === "profile" || raw === "mine" || raw.startsWith("profile")) return "profile";
+    if (raw === "rank" || raw.startsWith("rank")) return "rank";
+    if (raw === "bag" || raw.startsWith("bag")) return "bag";
+    return "home";
+  }
+
+  /* —— BGM：本地 mp3；音效：Web Audio —— */
+  const AUDIO_MUTED_KEY = "audioMuted_v1";
+  var synthCtx = null;
+  var synthMaster = null;
+  var synthSfx = null;
+
+  function audioMuted() {
+    try {
+      return localStorage.getItem(AUDIO_MUTED_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function refreshMasterMute() {
+    if (synthMaster) synthMaster.gain.value = audioMuted() ? 0 : 1;
+  }
+
+  function getBgmRelaxAudio() {
+    return document.getElementById("bgm-relax-audio");
+  }
+
+  function getBgmDailyAudio() {
+    return document.getElementById("bgm-daily-audio");
+  }
+
+  function applyBgmFileMuteState() {
+    var m = audioMuted();
+    var r = getBgmRelaxAudio();
+    var d = getBgmDailyAudio();
+    if (r) {
+      r.muted = m;
+      if (m) {
+        try {
+          r.pause();
+        } catch (e) {}
+      }
+    }
+    if (d) {
+      d.muted = m;
+      if (m) {
+        try {
+          d.pause();
+        } catch (e2) {}
+      }
+    }
+  }
+
+  function setAudioMuted(m) {
+    try {
+      localStorage.setItem(AUDIO_MUTED_KEY, m ? "1" : "0");
+    } catch (e) {}
+    var btn = document.getElementById("btn-audio-mute");
+    if (btn) {
+      btn.textContent = m ? "🔇" : "🔊";
+      btn.title = m ? "已静音（点击恢复）" : "静音";
+      btn.setAttribute("aria-pressed", m ? "true" : "false");
+    }
+    refreshMasterMute();
+    applyBgmFileMuteState();
+    if (m) {
+      stopRelaxBgm();
+      stopTenseBgm();
+    } else {
+      ensureSynth();
+      updateBgmForRoute(parseHash());
+    }
+  }
+
+  function ensureSynth() {
+    if (synthCtx) {
+      refreshMasterMute();
+      return synthCtx;
+    }
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    synthCtx = new Ctx();
+    synthMaster = synthCtx.createGain();
+    synthMaster.gain.value = 1;
+    synthMaster.connect(synthCtx.destination);
+    synthSfx = synthCtx.createGain();
+    synthSfx.gain.value = 0.4;
+    synthSfx.connect(synthMaster);
+    refreshMasterMute();
+    return synthCtx;
+  }
+
+  function resumeSynth() {
+    var ctx = ensureSynth();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume().catch(function () {});
+  }
+
+  function stopRelaxBgm() {
+    var r = getBgmRelaxAudio();
+    if (r) {
+      try {
+        r.pause();
+        r.currentTime = 0;
+      } catch (e) {}
+    }
+  }
+
+  function stopTenseBgm() {
+    var d = getBgmDailyAudio();
+    if (d) {
+      try {
+        d.pause();
+        d.currentTime = 0;
+        d.playbackRate = 1;
+      } catch (e) {}
+    }
+  }
+
+  function startRelaxBgm() {
+    if (audioMuted()) return;
+    resumeSynth();
+    stopTenseBgm();
+    var r = getBgmRelaxAudio();
+    var d = getBgmDailyAudio();
+    if (!r) return;
+    r.loop = true;
+    r.volume = 0.42;
+    r.muted = false;
+    if (d) {
+      try {
+        d.pause();
+      } catch (e2) {}
+    }
+    if (r.paused || r.ended) {
+      r.play().catch(function () {});
+    }
+  }
+
+  function startTenseDailyBgm() {
+    if (audioMuted()) return;
+    resumeSynth();
+    stopRelaxBgm();
+    stopTenseBgm();
+    var d = getBgmDailyAudio();
+    var r = getBgmRelaxAudio();
+    if (!d) return;
+    d.loop = true;
+    d.volume = 0.42;
+    d.muted = false;
+    d.playbackRate = 1;
+    if (r) {
+      try {
+        r.pause();
+      } catch (e) {}
+    }
+    d.play().catch(function () {});
+  }
+
+  function updateBgmForRoute(name) {
+    applyBgmFileMuteState();
+    if (audioMuted()) {
+      stopRelaxBgm();
+      stopTenseBgm();
+      return;
+    }
+    resumeSynth();
+    if (name === "home" || name === "rank" || name === "profile" || name === "bag") {
+      stopTenseBgm();
+      startRelaxBgm();
+    } else if (name === "daily") {
+      stopRelaxBgm();
+      startTenseDailyBgm();
+    } else {
+      stopRelaxBgm();
+      stopTenseBgm();
+    }
+  }
+
+  function playCorrect() {
+    if (audioMuted()) return;
+    var ctx = ensureSynth();
+    if (!ctx || !synthSfx) return;
+    resumeSynth();
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var g = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.exponentialRampToValueAtTime(1180, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.2, t + 0.018);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+    osc.connect(g);
+    g.connect(synthSfx);
+    osc.start(t);
+    osc.stop(t + 0.12);
+  }
+
+  function playWrong() {
+    if (audioMuted()) return;
+    var ctx = ensureSynth();
+    if (!ctx || !synthSfx) return;
+    resumeSynth();
+    var t = ctx.currentTime;
+    function blip(start, freq, dur) {
+      dur = dur || 0.07;
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.12, start + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      var filt = ctx.createBiquadFilter();
+      filt.type = "lowpass";
+      filt.frequency.value = 2200;
+      osc.connect(filt);
+      filt.connect(g);
+      g.connect(synthSfx);
+      osc.start(start);
+      osc.stop(start + dur + 0.02);
+    }
+    blip(t, 880, 0.055);
+    blip(t + 0.09, 520, 0.09);
+    blip(t + 0.22, 330, 0.12);
+  }
+
+  function playClick() {
+    if (audioMuted()) return;
+    var ctx = ensureSynth();
+    if (!ctx || !synthSfx) return;
+    resumeSynth();
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var g = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 1120;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.022);
+    osc.connect(g);
+    g.connect(synthSfx);
+    osc.start(t);
+    osc.stop(t + 0.028);
+  }
+
+  function playWin() {
+    if (audioMuted()) return;
+    var ctx = ensureSynth();
+    if (!ctx || !synthSfx) return;
+    resumeSynth();
+    var seq = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1046.5];
+    var t = ctx.currentTime;
+    seq.forEach(function (f, i) {
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = f;
+      var st = t + i * 0.095;
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(0.19, st + 0.035);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + 0.17);
+      osc.connect(g);
+      g.connect(synthSfx);
+      osc.start(st);
+      osc.stop(st + 0.19);
+    });
+  }
+
+  function playDailyTimeUp() {
+    if (audioMuted()) return;
+    var ctx = ensureSynth();
+    if (!ctx || !synthSfx) return;
+    resumeSynth();
+    var t = ctx.currentTime;
+    for (var k = 0; k < 6; k++) {
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.value = 920 - k * 120;
+      var st = t + k * 0.075;
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(0.13, st + 0.018);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + 0.065);
+      osc.connect(g);
+      g.connect(synthSfx);
+      osc.start(st);
+      osc.stop(st + 0.07);
+    }
+  }
+
+  function routeTo(name) {
+    if (!ROUTES[name]) name = "home";
+    const target = HASH[name];
+    if (location.hash !== target) location.hash = target;
+    else applyRoute(name);
+  }
+
+  function applyRoute(name) {
+    if (!ROUTES[name]) name = "home";
+    Object.keys(ROUTES).forEach((key) => {
+      const el = document.getElementById(ROUTES[key]);
+      if (el) el.classList.toggle("active", key === name);
+    });
+    document.body.classList.toggle("island-mechanics-bg", name === "island");
+
+    document.querySelectorAll(".tab-item[data-route]").forEach((btn) => {
+      const r = btn.getAttribute("data-route");
+      const active = TAB_ROUTES.has(name) && r === name;
+      btn.classList.toggle("active", active);
+    });
+
+    const pv = document.getElementById("pressure-lesson-video");
+    if (name !== "island" && pv) {
+      try {
+        pv.pause();
+      } catch (e) {}
+    }
+    const settle = document.getElementById("quiz-settle-overlay");
+    if (settle && name !== "quiz") settle.classList.remove("open");
+    const dailySettle = document.getElementById("daily-settle-overlay");
+    if (dailySettle && name !== "daily") dailySettle.classList.remove("open");
+    const dailyRankOv = document.getElementById("daily-ranking-overlay");
+    if (dailyRankOv && name !== "daily") dailyRankOv.classList.remove("open");
+    var dblPr = document.getElementById("daily-double-prompt-overlay");
+    if (dblPr && name !== "daily") dblPr.classList.remove("open");
+    var repOv = document.getElementById("profile-report-overlay");
+    if (repOv && name !== "profile") repOv.classList.remove("open");
+    var wbOv = document.getElementById("profile-wrongbook-overlay");
+    if (wbOv && name !== "profile") wbOv.classList.remove("open");
+    if (name !== "daily") {
+      stopDailyTimer();
+      pendingDoublePromptQuestions = null;
+    }
+    if (name === "rank") onEnterRank();
+    updateBgmForRoute(name);
+  }
+
+  function syncFromHash() {
+    const name = parseHash();
+    applyRoute(name);
+    if (name === "island") onEnterIsland();
+    if (name === "quiz") onEnterQuiz();
+    if (name === "daily") onEnterDaily();
+    if (name === "home" || name === "rank" || name === "bag") {
+      syncHomeAvatarFromStorage();
+      if (name === "bag") refreshBagUI();
+    }
+    if (name === "profile") {
+      applyProfilePreviewOnly(getSavedAvatarId());
+      refreshProfileCard();
+    }
+  }
+
+  document.querySelectorAll("[data-nav]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const name = el.getAttribute("data-nav");
+      if (name) routeTo(name);
+    });
+  });
+
+  document.addEventListener(
+    "click",
+    function (ev) {
+      if (audioMuted()) return;
+      var el = ev.target;
+      if (!el || !el.closest) return;
+      if (el.closest("#btn-audio-mute")) return;
+      if (
+        el.closest("button") ||
+        el.closest(".tab-item") ||
+        el.closest(".quiz-opt") ||
+        el.closest(".preset-card") ||
+        el.closest(".btn-ranking-header") ||
+        el.closest(".btn-daily") ||
+        el.closest(".island-node") ||
+        el.closest(".btn-ghost") ||
+        el.closest(".btn-primary") ||
+        el.closest(".btn-outline")
+      ) {
+        playClick();
+      }
+    },
+    true
+  );
+
+  var btnAudioMute = document.getElementById("btn-audio-mute");
+  if (btnAudioMute) {
+    btnAudioMute.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      setAudioMuted(!audioMuted());
+    });
+    setAudioMuted(audioMuted());
+  }
+
+  /* —— 力学岛：视频 → 开始答题 —— */
+  const pressureVideo = document.getElementById("pressure-lesson-video");
+  const videoHint = document.getElementById("video-progress-hint");
+  const btnStartQuiz = document.getElementById("btn-start-quiz");
+  const btnSkipVideo = document.getElementById("btn-skip-video");
+  let pressureVideoDone = false;
+
+  function setQuizButtonEnabled(on) {
+    pressureVideoDone = on;
+    if (btnStartQuiz) {
+      btnStartQuiz.disabled = !on;
+    }
+    if (videoHint) {
+      videoHint.classList.toggle("done", on);
+      videoHint.textContent = on
+        ? "视频进度：已完整观看，可以开始答题"
+        : "视频进度：未完成播放，「开始答题」暂不可用";
+    }
+  }
+
+  function resetIslandVideo() {
+    setQuizButtonEnabled(false);
+    if (btnSkipVideo) btnSkipVideo.classList.add("hidden");
+    if (pressureVideo) {
+      try {
+        pressureVideo.pause();
+        pressureVideo.currentTime = 0;
+      } catch (e) {}
+    }
+  }
+
+  function markVideoComplete() {
+    if (pressureVideoDone) return;
+    setQuizButtonEnabled(true);
+  }
+
+  function onTimeUpdate() {
+    if (!pressureVideo || !pressureVideo.duration) return;
+    if (pressureVideo.currentTime / pressureVideo.duration >= 0.95) {
+      markVideoComplete();
+    }
+  }
+
+  function onVideoError() {
+    if (videoHint) {
+      videoHint.textContent = "视频加载失败，请检查文件是否存在";
+      videoHint.classList.remove("done");
+    }
+    if (btnSkipVideo) btnSkipVideo.classList.remove("hidden");
+  }
+
+  function bindIslandVideoOnce() {
+    if (!pressureVideo) return;
+    pressureVideo.addEventListener("ended", markVideoComplete);
+    pressureVideo.addEventListener("timeupdate", onTimeUpdate);
+    pressureVideo.addEventListener("error", onVideoError);
+  }
+
+  function onEnterIsland() {
+    resetIslandVideo();
+  }
+
+  if (btnSkipVideo) {
+    btnSkipVideo.addEventListener("click", function () {
+      markVideoComplete();
+      btnSkipVideo.classList.add("hidden");
+    });
+  }
+
+  if (btnStartQuiz) {
+    btnStartQuiz.addEventListener("click", function () {
+      if (btnStartQuiz.disabled) return;
+      routeTo("quiz");
+    });
+  }
+
+  /* —— 压强答题：内嵌题目 JSON；两次机会计分；错题本见 wrongBookMain_* —— */
+  const PRESSURE_QUESTIONS_EMBEDDED = [
+    {
+      question: "马德堡半球实验主要说明了什么？",
+      options: ["大气压强的存在", "液体压强与深度有关", "浮力产生的原因", "分子间存在引力"],
+      answer: "A",
+      explanation: "半球实验是经典的大气压存在证明。",
+    },
+    {
+      question: "标准大气压约为多少？",
+      options: ["1.0×10⁵ Pa", "1.0×10³ Pa", "1.0×10⁷ Pa", "1 Pa"],
+      answer: "A",
+      explanation: "约 1.013×10⁵ Pa，常近似为 10⁵ Pa。",
+    },
+    {
+      question: "用吸管喝饮料，主要利用了？",
+      options: ["大气压", "液体压强", "重力", "摩擦力"],
+      answer: "A",
+      explanation: "吸气使管内气压降低，外界大气压把液体压入管内。",
+    },
+    {
+      question: "海拔升高，大气压强通常如何变化？",
+      options: ["减小", "增大", "不变", "先增后减"],
+      answer: "A",
+      explanation: "空气稀薄，气压随高度升高而降低。",
+    },
+    {
+      question: "托里拆利实验中，玻璃管内水银柱高度主要取决于？",
+      options: ["外界大气压", "玻璃管粗细", "水银槽形状", "管是否倾斜"],
+      answer: "A",
+      explanation: "水银柱产生的压强与外界大气压平衡。",
+    },
+    {
+      question: "高压锅内食物更容易煮熟，主要原因是？",
+      options: ["锅内气压高，沸点升高", "锅内气压低，沸点降低", "导热更快", "水量更多"],
+      answer: "A",
+      explanation: "气压升高，水的沸点升高。",
+    },
+    {
+      question: "钢笔吸墨水时，挤压橡皮管是为了？",
+      options: ["排出空气，利用大气压压入墨水", "增大摩擦力", "过滤杂质", "降温"],
+      answer: "A",
+      explanation: "先减小内部气压，再靠大气压把墨水压入。",
+    },
+    {
+      question: "离心式水泵抽水高度有限，主要受限于？",
+      options: ["当地大气压能支撑的水柱高度", "电机功率", "水管颜色", "水的密度变化"],
+      answer: "A",
+      explanation: "理论上大气压最多支撑约10.3m水柱（标准大气压）。",
+    },
+    {
+      question: "下列现象中与大气压无关的是？",
+      options: ["拦河坝上窄下宽", "吸盘吸附在玻璃上", "覆杯实验", "针筒抽取药液"],
+      answer: "A",
+      explanation: "拦河坝形状主要考虑液体压强随深度增大。",
+    },
+    {
+      question: "做托里拆利实验时，若玻璃管顶端开孔，水银柱会？",
+      options: ["下降直至与槽内液面相平", "继续升高", "不变", "喷出管外"],
+      answer: "A",
+      explanation: "顶端开孔后管内外都与大气相通，不再形成真空支撑。",
+    },
+  ];
+
+  const DAILY_QUESTIONS_EMBEDDED = [
+    {
+      question: "在国际单位制中，力的单位是？",
+      options: ["牛顿", "千克", "米每秒", "帕斯卡"],
+      answer: "A",
+      explanation: "牛顿（N）是力的单位。",
+    },
+    {
+      question: "光在同种均匀介质中沿什么路径传播？",
+      options: ["折线", "直线", "抛物线", "螺旋线"],
+      answer: "B",
+      explanation: "同种均匀介质中光沿直线传播。",
+    },
+    {
+      question: "声音的产生主要是因为？",
+      options: ["温度变化", "物体振动", "颜色变化", "体积膨胀"],
+      answer: "B",
+      explanation: "声音由物体振动产生。",
+    },
+    {
+      question: "下列环境中，声音最难传播的是？",
+      options: ["水中", "钢铁中", "真空中", "空气中"],
+      answer: "C",
+      explanation: "真空不能传声。",
+    },
+    {
+      question: "部分电路欧姆定律可写作？",
+      options: ["I=U/R", "I=UR", "U=IR²", "R=U²/I"],
+      answer: "A",
+      explanation: "I=U/R 为常见形式。",
+    },
+    {
+      question: "惯性的大小主要取决于物体的？",
+      options: ["速度", "质量", "温度", "形状"],
+      answer: "B",
+      explanation: "惯性大小只与质量有关。",
+    },
+    {
+      question: "在液体密度一定时，深度越大，液体压强？",
+      options: ["越小", "不变", "越大", "为零"],
+      answer: "C",
+      explanation: "p=ρgh，h 增大则 p 增大。",
+    },
+    {
+      question: "平面镜所成的像与物体到镜面的距离关系是？",
+      options: ["像更远", "相等", "物更远", "随机"],
+      answer: "B",
+      explanation: "像距等于物距。",
+    },
+    {
+      question: "两电阻串联后的总电阻 R 与各电阻关系为？",
+      options: ["R=R1·R2", "R=R1+R2", "R=R1/R2", "R=|R1-R2|"],
+      answer: "B",
+      explanation: "串联总电阻等于各电阻之和。",
+    },
+    {
+      question: "凸透镜对平行于主光轴的入射光具有？",
+      options: ["发散作用", "会聚作用", "全反射", "无偏折"],
+      answer: "B",
+      explanation: "凸透镜对光有会聚作用。",
+    },
+  ];
+
+  let cachedParsedQuestions = null;
+  let quizSession = null;
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /* —— 学习记录 / 打卡 / 主线错题本（localStorage） —— */
+  const STUDY_SESSIONS_KEY = "studySessionsLog_v1";
+  const CHECKIN_KEY = "checkInData_v1";
+  const WRONG_BOOK_MAIN_KEY = "wrongBookMain_v1";
+  const LEGACY_WRONG_BOOK_KEY = "pressureQuizWrongBook_v1";
+
+  function localDateStrFromDate(dt) {
+    var y = dt.getFullYear();
+    var m = String(dt.getMonth() + 1).padStart(2, "0");
+    var da = String(dt.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + da;
+  }
+
+  function localDateStr() {
+    return localDateStrFromDate(new Date());
+  }
+
+  function yesterdayDateStr() {
+    var d = new Date();
+    d.setDate(d.getDate() - 1);
+    return localDateStrFromDate(d);
+  }
+
+  function simpleTextHash(str) {
+    var h = 0;
+    var s = String(str);
+    for (var i = 0; i < s.length; i++) {
+      h = (h << 5) - h + s.charCodeAt(i);
+      h |= 0;
+    }
+    return Math.abs(h).toString(36).slice(0, 10);
+  }
+
+  function inferKnowledgePoint(question) {
+    var t = String(question || "");
+    var rules = [
+      [/大气压|托里拆利|马德堡半球|气压计|马德堡|吸管抽水/i, "大气压"],
+      [/浮力|阿基米德|排开|漂浮|悬浮|下沉|溢水杯/i, "浮力"],
+      [/液体压强|U\s*形管|同种液体.*深度|越深.*压强/i, "液体压强"],
+      [/压强|帕斯卡|P\s*=/i, "压强"],
+      [/密度|ρ|rho|千克每|g\s*\/\s*cm|m\^3/i, "密度"],
+      [/摩擦力|摩擦系数|光滑表面/i, "摩擦力"],
+      [/杠杆|力臂|支点|动力.*阻力/i, "杠杆与力臂"],
+      [/功|功率|焦耳|W\s*=/i, "功与功率"],
+    ];
+    for (var r = 0; r < rules.length; r++) {
+      if (rules[r][0].test(t)) return rules[r][1];
+    }
+    return "力学综合";
+  }
+
+  function dedupeStrings(arr) {
+    var seen = {};
+    var out = [];
+    (arr || []).forEach(function (x) {
+      var k = String(x || "").trim();
+      if (!k || seen[k]) return;
+      seen[k] = true;
+      out.push(k);
+    });
+    return out;
+  }
+
+  function migrateLegacyWrongBookOnce() {
+    try {
+      if (localStorage.getItem(WRONG_BOOK_MAIN_KEY)) return;
+      var leg = localStorage.getItem(LEGACY_WRONG_BOOK_KEY);
+      if (!leg) return;
+      var arr = JSON.parse(leg);
+      if (!Array.isArray(arr) || !arr.length) return;
+      var out = [];
+      arr.forEach(function (e, i) {
+        var ans = String((e && e.answer) || "A").toUpperCase().match(/[ABCD]/);
+        var letter = ans ? ans[0] : "A";
+        out.push({
+          id: "legacy-" + i + "-" + simpleTextHash(String(e && e.question)),
+          question: (e && e.question) || "",
+          options: Array.isArray(e && e.options) ? e.options.slice(0, 4) : [],
+          correctAnswer: letter,
+          explanation: (e && e.explanation) || "",
+          knowledgePoint: inferKnowledgePoint(e && e.question),
+          wrongCount: 1,
+          lastWrongDate:
+            e && e.recordedAt && String(e.recordedAt).length >= 10
+              ? String(e.recordedAt).slice(0, 10)
+              : localDateStr(),
+        });
+      });
+      localStorage.setItem(WRONG_BOOK_MAIN_KEY, JSON.stringify(out));
+    } catch (e) {}
+  }
+
+  function wrongBookMainLoad() {
+    try {
+      var raw = localStorage.getItem(WRONG_BOOK_MAIN_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    migrateLegacyWrongBookOnce();
+    try {
+      var raw2 = localStorage.getItem(WRONG_BOOK_MAIN_KEY);
+      if (raw2) return JSON.parse(raw2);
+    } catch (e2) {}
+    return [];
+  }
+
+  function wrongBookMainSave(arr) {
+    try {
+      localStorage.setItem(WRONG_BOOK_MAIN_KEY, JSON.stringify(arr));
+    } catch (e) {}
+  }
+
+  function wrongBookMainIdForQuestion(q, idx) {
+    return "main-pressure-v1-" + idx + "-" + simpleTextHash(q.question);
+  }
+
+  /** 主线错题：第一次答错或两次都错时调用；deltaCount 通常为 1 */
+  function wrongBookMainRecordWrong(q, idx, deltaCount) {
+    if (!q || !deltaCount) return;
+    var arr = wrongBookMainLoad();
+    var id = wrongBookMainIdForQuestion(q, idx);
+    var today = localDateStr();
+    var letter = answerLetter(q);
+    var kp = inferKnowledgePoint(q.question);
+    var i = arr.findIndex(function (x) {
+      return x.id === id;
+    });
+    if (i >= 0) {
+      arr[i].wrongCount = (parseInt(arr[i].wrongCount, 10) || 0) + deltaCount;
+      arr[i].lastWrongDate = today;
+      arr[i].explanation = q.explanation || arr[i].explanation;
+      arr[i].knowledgePoint = kp;
+    } else {
+      arr.push({
+        id: id,
+        question: q.question,
+        options: (q.options || []).slice(0, 4),
+        correctAnswer: letter,
+        explanation: q.explanation || "",
+        knowledgePoint: kp,
+        wrongCount: deltaCount,
+        lastWrongDate: today,
+      });
+    }
+    wrongBookMainSave(arr);
+  }
+
+  function wrongBookMainRemoveById(id) {
+    var arr = wrongBookMainLoad().filter(function (x) {
+      return x.id !== id;
+    });
+    wrongBookMainSave(arr);
+  }
+
+  function studySessionsLoad() {
+    try {
+      var raw = localStorage.getItem(STUDY_SESSIONS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function studySessionsAppend(rec) {
+    var arr = studySessionsLoad();
+    arr.push({
+      type: rec.type === "daily" ? "daily" : "main",
+      date: rec.date || localDateStr(),
+      score: Number(rec.score) || 0,
+      totalQuestions: Math.max(0, parseInt(rec.totalQuestions, 10) || 0),
+      correctCount: Math.max(0, parseInt(rec.correctCount, 10) || 0),
+      weakPoints: Array.isArray(rec.weakPoints) ? rec.weakPoints : [],
+    });
+    try {
+      localStorage.setItem(STUDY_SESSIONS_KEY, JSON.stringify(arr));
+    } catch (e) {}
+  }
+
+  function checkInLoad() {
+    try {
+      var raw = localStorage.getItem(CHECKIN_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { lastCheckInDate: "", continuousDays: 0, history: [] };
+  }
+
+  function checkInSave(data) {
+    try {
+      localStorage.setItem(CHECKIN_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function recordCheckInAfterCompletedQuiz() {
+    var today = localDateStr();
+    var data = checkInLoad();
+    var hist = Array.isArray(data.history) ? data.history.slice() : [];
+    if (hist.indexOf(today) >= 0) return;
+    hist.push(today);
+    var last = String(data.lastCheckInDate || "");
+    var streak = parseInt(data.continuousDays, 10) || 0;
+    var yest = yesterdayDateStr();
+    if (!last) {
+      streak = 1;
+    } else if (last === yest) {
+      streak += 1;
+    } else if (last === today) {
+      return;
+    } else {
+      streak = 1;
+    }
+    if (hist.length > 400) hist = hist.slice(-400);
+    checkInSave({
+      lastCheckInDate: today,
+      continuousDays: streak,
+      history: hist,
+    });
+  }
+
+  function weekStartMondayStr() {
+    var now = new Date();
+    var d = now.getDay();
+    var diff = d === 0 ? -6 : 1 - d;
+    var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+    return localDateStrFromDate(mon);
+  }
+
+  function aggregateWeeklyStudy() {
+    var start = weekStartMondayStr();
+    var sessions = studySessionsLoad().filter(function (s) {
+      return String(s.date || "") >= start;
+    });
+    var n = sessions.length;
+    var minutes = n * 5;
+    var totalQ = 0;
+    var totalCorrect = 0;
+    var weakAgg = {};
+    sessions.forEach(function (s) {
+      var tq = s.totalQuestions | 0;
+      var cc = s.correctCount | 0;
+      totalQ += tq;
+      totalCorrect += cc;
+      (s.weakPoints || []).forEach(function (w) {
+        var k = String(w || "").trim() || "力学综合";
+        weakAgg[k] = (weakAgg[k] || 0) + 1;
+      });
+    });
+    var avgAcc =
+      totalQ > 0 ? Math.round((totalCorrect / totalQ) * 1000) / 10 : null;
+    var weakTop = Object.keys(weakAgg)
+      .map(function (k) {
+        return { k: k, c: weakAgg[k] };
+      })
+      .sort(function (a, b) {
+        return b.c - a.c;
+      })
+      .slice(0, 3)
+      .map(function (x) {
+        return x.k;
+      });
+    return {
+      sessionCount: n,
+      minutes: minutes,
+      avgAcc: avgAcc,
+      weakTop: weakTop,
+      weekStart: start,
+    };
+  }
+
+  function nextStreakMilestone(streak) {
+    var m = [
+      { days: 7, coins: 100 },
+      { days: 14, coins: 200 },
+      { days: 30, coins: 500 },
+    ];
+    for (var i = 0; i < m.length; i++) {
+      if (streak < m[i].days) {
+        return { need: m[i].days - streak, target: m[i].days, coins: m[i].coins };
+      }
+    }
+    return null;
+  }
+
+  function buildStudySuggestions(weakTop) {
+    if (!weakTop || !weakTop.length) return "保持练习节奏，尝试每日挑战巩固手感。";
+    var parts = weakTop.map(function (k) {
+      return "「" + k + "」";
+    });
+    return "建议在本周重点复习 " + parts.join("、") + " 相关章节与例题，并结合错题本反复回顾。";
+  }
+
+  function renderStudyReportModal() {
+    var el = document.getElementById("profile-report-content");
+    if (!el) return;
+    var agg = aggregateWeeklyStudy();
+    if (agg.sessionCount === 0) {
+      el.innerHTML =
+        '<p class="page-sub" style="text-align:center;padding:20px 8px;font-weight:700">暂无学习数据，快去完成挑战吧</p>';
+      return;
+    }
+    var h = Math.floor(agg.minutes / 60);
+    var m = agg.minutes % 60;
+    var timeStr = h > 0 ? h + " 小时 " + m + " 分钟" : m + " 分钟";
+    var accStr = agg.avgAcc != null ? agg.avgAcc + "%" : "—";
+    var weakStr =
+      agg.weakTop && agg.weakTop.length ? agg.weakTop.join("、") : "（本周无错题标签）";
+    el.innerHTML =
+      '<div class="profile-report-stat">本周学习时长（估算）：<strong>' +
+      escapeHtml(timeStr) +
+      "</strong><br/><span style=\"font-size:12px;font-weight:600;color:var(--text-secondary)\">每次完成主线或每日挑战按 5 分钟计入</span></div>" +
+      '<div class="profile-report-stat">本周完成任务数：<strong>' +
+      agg.sessionCount +
+      "</strong> 次 <span style=\"font-size:12px\">（主线 + 每日挑战）</span></div>" +
+      '<div class="profile-report-stat">本周平均正确率：<strong>' +
+      accStr +
+      "</strong></div>" +
+      '<div class="profile-report-stat">最薄弱知识点（前 3）：<strong>' +
+      escapeHtml(weakStr) +
+      "</strong></div>" +
+      '<div class="profile-suggest-box">学习建议：' +
+      escapeHtml(buildStudySuggestions(agg.weakTop)) +
+      "</div>";
+  }
+
+  function renderWrongBookModal() {
+    var el = document.getElementById("profile-wrongbook-content");
+    if (!el) return;
+    var arr = wrongBookMainLoad();
+    if (!arr.length) {
+      el.innerHTML =
+        '<p class="page-sub" style="text-align:center;padding:24px 8px;font-weight:700">暂无错题，继续加油</p>';
+      return;
+    }
+    var html = "";
+    arr.forEach(function (item) {
+      var opts = (item.options || [])
+        .map(function (o, i) {
+          return "<strong>" + "ABCD"[i] + ".</strong> " + escapeHtml(String(o));
+        })
+        .join("<br/>");
+      html +=
+        '<div class="wrong-item-card" data-wrong-id="' +
+        escapeHtml(item.id) +
+        '">' +
+        "<h4>" +
+        escapeHtml(item.question) +
+        "</h4>" +
+        '<div class="wrong-item-meta">知识点：' +
+        escapeHtml(item.knowledgePoint || "力学综合") +
+        " · 错过 " +
+        (parseInt(item.wrongCount, 10) || 1) +
+        " 次 · 最近：" +
+        escapeHtml(item.lastWrongDate || "—") +
+        "</div>" +
+        "<p><strong>正确答案 " +
+        escapeHtml(String(item.correctAnswer || "")) +
+        "</strong></p>" +
+        '<p style="font-size:12px;margin:6px 0">' +
+        opts +
+        "</p>" +
+        "<p style=\"font-size:12px;margin-top:8px\">" +
+        escapeHtml(item.explanation || "").replace(/\n/g, "<br/>") +
+        "</p>" +
+        '<button type="button" class="wrong-item-remove" data-remove-wrong="' +
+        escapeHtml(item.id) +
+        '">移除此题</button></div>';
+    });
+    el.innerHTML = html;
+  }
+
+  function refreshProfileLearningWidgets() {
+    var prev = document.getElementById("profile-report-preview");
+    var agg = aggregateWeeklyStudy();
+    if (prev) {
+      if (!agg.sessionCount) {
+        prev.textContent = "本周暂无记录，完成一次主线或每日挑战即可生成报告。";
+      } else {
+        prev.textContent =
+          "本周约 " +
+          agg.minutes +
+          " 分钟 · " +
+          agg.sessionCount +
+          " 次 · 正确率 " +
+          (agg.avgAcc != null ? agg.avgAcc + "%" : "—");
+      }
+    }
+    var chk = document.getElementById("profile-checkin-body");
+    if (chk) {
+      var data = checkInLoad();
+      var streak = parseInt(data.continuousDays, 10) || 0;
+      var today = localDateStr();
+      var hist = Array.isArray(data.history) ? data.history : [];
+      var doneToday = hist.indexOf(today) >= 0;
+      var nextM = nextStreakMilestone(streak);
+      var rewardLine = nextM
+        ? "再坚持 <strong>" +
+          nextM.need +
+          "</strong> 天可获得 <strong>" +
+          nextM.coins +
+          "</strong> 金币（" +
+          nextM.target +
+          " 天里程碑）"
+        : "已连续达成 7 / 14 / 30 天里程碑，继续保持习惯！";
+      chk.innerHTML =
+        "<p class=\"page-sub\">当前连续打卡：<strong>" +
+        streak +
+        "</strong> 天</p>" +
+        "<p class=\"page-sub\">今日是否已打卡：" +
+        (doneToday ? "✅ 已完成" : "❌ 尚未完成") +
+        "</p>" +
+        "<p class=\"page-sub\">" +
+        rewardLine +
+        "</p>";
+    }
+    var wbPrev = document.getElementById("profile-wrongbook-preview");
+    if (wbPrev) {
+      var n = wrongBookMainLoad().length;
+      wbPrev.textContent = n ? "当前共 " + n + " 道错题（仅主线）" : "暂无主线错题";
+    }
+  }
+
+  const NICKNAME_LS_KEY = "playerNickname_v1";
+
+  function normalizeApiBase(url) {
+    var u = String(url || "").trim();
+    if (!u || u.indexOf("YOUR_APPS_SCRIPT") !== -1) return "";
+    return u.replace(/\/?$/, "");
+  }
+
+  function randomAdventurerNickname() {
+    return "冒险者" + String(Math.floor(100 + Math.random() * 900));
+  }
+
+  function ensureDefaultNickname() {
+    try {
+      if (!localStorage.getItem(NICKNAME_LS_KEY)) {
+        localStorage.setItem(NICKNAME_LS_KEY, randomAdventurerNickname());
+      }
+    } catch (e) {}
+  }
+
+  function getPlayerNickname() {
+    ensureDefaultNickname();
+    try {
+      var n = localStorage.getItem(NICKNAME_LS_KEY);
+      if (n && String(n).trim()) return String(n).trim().slice(0, 16);
+    } catch (e) {}
+    return "冒险者000";
+  }
+
+  function setPlayerNickname(raw) {
+    var s = String(raw || "").trim().slice(0, 16);
+    if (!s) s = randomAdventurerNickname();
+    try {
+      localStorage.setItem(NICKNAME_LS_KEY, s);
+    } catch (e) {}
+    return s;
+  }
+
+  function submitScoreToBackend(nickname, score, challengeType) {
+    var base = normalizeApiBase(API_BASE);
+    if (!base) return Promise.resolve({ skipped: true, message: "未配置 API_BASE" });
+    var url =
+      base +
+      "?action=submitScore" +
+      "&nickname=" +
+      encodeURIComponent(nickname) +
+      "&score=" +
+      encodeURIComponent(String(score)) +
+      "&challengeType=" +
+      encodeURIComponent(challengeType || "daily");
+    return fetch(url, { method: "GET", mode: "cors" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json().catch(function () {
+        return { success: false, error: "响应不是有效 JSON" };
+      });
+    });
+  }
+
+  function fetchRankingFromBackend() {
+    var base = normalizeApiBase(API_BASE);
+    if (!base) return Promise.reject(new Error("未配置 API_BASE"));
+    return fetch(base + "?action=getRanking", { method: "GET", mode: "cors" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function parseRankingPayload(data) {
+    if (!data) return [];
+    var raw = data.ranking;
+    if (!Array.isArray(raw)) return [];
+    return raw.map(function (row) {
+      if (!row || typeof row !== "object") return { nickname: "—", score: 0, timestamp: "" };
+      return {
+        nickname: row.nickname != null ? String(row.nickname) : String(row.name || ""),
+        score: parseInt(row.score, 10) || 0,
+        timestamp: row.timestamp != null ? String(row.timestamp) : "",
+      };
+    });
+  }
+
+  function sortRankingRows(rows) {
+    return rows.slice().sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(a.timestamp).localeCompare(String(b.timestamp));
+    });
+  }
+
+  function computeMyRank(sortedRows, myNickname) {
+    var nick = String(myNickname || "");
+    var idx = sortedRows.findIndex(function (r) {
+      return String(r.nickname) === nick;
+    });
+    return idx < 0 ? null : idx + 1;
+  }
+
+  function renderRankingTableHTML(topRows) {
+    if (!topRows.length) {
+      return '<p class="page-sub" style="text-align:center;padding:12px">暂无排行数据</p>';
+    }
+    var html =
+      '<table><thead><tr><th>#</th><th>昵称</th><th>分数</th></tr></thead><tbody>';
+    topRows.forEach(function (r, i) {
+      html +=
+        "<tr><td>" +
+        (i + 1) +
+        "</td><td>" +
+        escapeHtml(r.nickname) +
+        "</td><td>" +
+        r.score +
+        "</td></tr>";
+    });
+    html += "</tbody></table>";
+    return html;
+  }
+
+  function refreshProfileCard() {
+    var inp = document.getElementById("profile-nickname-input");
+    if (inp) inp.value = getPlayerNickname();
+    var pg = document.getElementById("profile-gold-display");
+    var hg = document.getElementById("home-gold-display");
+    if (pg && hg) pg.textContent = hg.textContent;
+    refreshProfileLearningWidgets();
+  }
+
+  /**
+   * @param {{ timeInStatus?: boolean }} opts timeInStatus：排行页显示「已更新 · 时:分:秒」
+   */
+  function fetchAndRenderLiveRanking(statusEl, scrollEl, meEl, opts) {
+    opts = opts || {};
+    if (!scrollEl) return Promise.resolve();
+    scrollEl.innerHTML = "";
+    if (meEl) meEl.textContent = "";
+    if (!normalizeApiBase(API_BASE)) {
+      if (statusEl) statusEl.textContent = "未配置 API_BASE";
+      scrollEl.innerHTML =
+        '<p class="page-sub" style="text-align:center;padding:12px;line-height:1.5">请在脚本中将 <code>API_BASE</code> 替换为你的 Apps Script Web 应用网址。</p>';
+      return Promise.resolve();
+    }
+    if (statusEl) statusEl.textContent = "正在拉取排行榜…";
+    var myNick = getPlayerNickname();
+    return fetchRankingFromBackend()
+      .then(function (data) {
+        var ok = data && data.success;
+        var statusMsg = ok ? "已更新" : "服务器返回异常，请检查接口";
+        if (ok && opts.timeInStatus) {
+          try {
+            statusMsg += " · " + new Date().toLocaleTimeString();
+          } catch (e2) {}
+        }
+        if (statusEl) statusEl.textContent = statusMsg;
+        var sorted = sortRankingRows(parseRankingPayload(data));
+        scrollEl.innerHTML = renderRankingTableHTML(sorted.slice(0, 10));
+        var rank = computeMyRank(sorted, myNick);
+        if (meEl) {
+          if (rank == null) {
+            meEl.textContent = "「" + myNick + "」暂无上榜记录（或昵称与提交时不一致）";
+          } else {
+            meEl.textContent = "我的排名：第 " + rank + " 名";
+          }
+        }
+      })
+      .catch(function (e) {
+        if (statusEl) statusEl.textContent = "加载失败：" + ((e && e.message) || String(e));
+        scrollEl.innerHTML = "";
+      });
+  }
+
+  function openDailyRankingModal() {
+    var ov = document.getElementById("daily-ranking-overlay");
+    var statusEl = document.getElementById("daily-ranking-status");
+    var scrollEl = document.getElementById("daily-ranking-scroll");
+    var meEl = document.getElementById("daily-ranking-my-rank");
+    if (!ov || !scrollEl) return;
+    ov.classList.add("open");
+    fetchAndRenderLiveRanking(statusEl, scrollEl, meEl, { timeInStatus: false });
+  }
+
+  function onEnterRank() {
+    var statusEl = document.getElementById("rank-page-status");
+    var scrollEl = document.getElementById("rank-page-scroll");
+    var meEl = document.getElementById("rank-page-my-rank");
+    fetchAndRenderLiveRanking(statusEl, scrollEl, meEl, { timeInStatus: true });
+  }
+
+  /** 题目 JSON：answer 为正确选项字母 A/B/C/D */
+  function answerLetter(q) {
+    var a = String(q && q.answer != null ? q.answer : "").trim().toUpperCase();
+    if (/^[ABCD]$/.test(a)) return a;
+    var m = a.match(/([ABCD])/);
+    return m ? m[1] : "";
+  }
+
+  function optionByLetter(q, letter) {
+    var i = "ABCD".indexOf(letter);
+    if (!q || !q.options || i < 0) return "";
+    return q.options[i] != null ? String(q.options[i]) : "";
+  }
+
+  function cloneQuestionsEmbedded(list) {
+    return list.map(function (q) {
+      var ans = String(q && q.answer != null ? q.answer : "").trim().toUpperCase();
+      var mch = ans.match(/[ABCD]/);
+      var letter = /^[ABCD]$/.test(ans) ? ans : mch ? mch[0] : "A";
+      return {
+        question: String(q && q.question != null ? q.question : ""),
+        options: (q && q.options ? q.options : []).slice(0, 4),
+        answer: letter,
+        explanation: String(q && q.explanation != null ? q.explanation : "") || "（本题暂无解析）",
+      };
+    });
+  }
+
+  function elQuiz(id) {
+    return document.getElementById(id);
+  }
+
+  function showQuizLoading(on) {
+    elQuiz("quiz-loading").classList.toggle("hidden", !on);
+  }
+
+  function showQuizLoadError(on, msg) {
+    elQuiz("quiz-load-error").classList.toggle("hidden", !on);
+    if (msg) elQuiz("quiz-load-error-msg").textContent = msg;
+  }
+
+  function showQuizMain(on) {
+    elQuiz("quiz-main").classList.toggle("hidden", !on);
+  }
+
+  function resetQuizPanels() {
+    showQuizLoadError(false);
+    showQuizLoading(false);
+    showQuizMain(false);
+  }
+
+  function onEnterQuiz() {
+    resetQuizPanels();
+    try {
+      var qs = cloneQuestionsEmbedded(PRESSURE_QUESTIONS_EMBEDDED);
+      if (qs.length !== 10) throw new Error("内嵌压强题目数量应为 10 道。");
+      cachedParsedQuestions = qs;
+      showQuizLoading(false);
+      showQuizLoadError(false);
+      showQuizMain(true);
+      startQuizSession(qs);
+    } catch (e) {
+      console.error(e);
+      cachedParsedQuestions = null;
+      showQuizLoadError(true, (e && e.message) || String(e));
+    }
+  }
+
+  function startQuizSession(questions) {
+    quizSession = {
+      questions: questions,
+      index: 0,
+      totalScore: 0,
+      firstOk: 0,
+      secondOk: 0,
+      doubleWrong: 0,
+      firstWrong: false,
+      firstPick: null,
+      awaitingNext: false,
+      questionPoints: new Array(10).fill(0),
+      sessionWeakTags: [],
+      weakTagByIdx: {},
+    };
+    elQuiz("btn-quiz-next").classList.add("hidden");
+    elQuiz("quiz-feedback-wrap").classList.add("hidden");
+    updateScoreDisplay();
+    renderCurrentQuestion();
+  }
+
+  function updateScoreDisplay() {
+    elQuiz("quiz-score-val").textContent = String(quizSession ? quizSession.totalScore : 0);
+  }
+
+  function updateProgressDisplay() {
+    const idx = quizSession.index + 1;
+    elQuiz("quiz-progress-text").textContent = "第 " + idx + " 题 / 共 10 题";
+  }
+
+  function setStatus(text, kind) {
+    const el = elQuiz("quiz-status-line");
+    el.textContent = text;
+    el.className = "quiz-status" + (kind === "ok" ? " ok" : kind === "bad" ? " bad" : "");
+  }
+
+  function showFeedbackPlain(title, body) {
+    elQuiz("quiz-feedback-title").textContent = title;
+    elQuiz("quiz-feedback-body").innerHTML = "<p>" + escapeHtml(body).replace(/\n/g, "<br/>") + "</p>";
+    elQuiz("quiz-feedback-wrap").classList.remove("hidden");
+  }
+
+  function showFeedbackHtml(title, html) {
+    elQuiz("quiz-feedback-title").textContent = title;
+    elQuiz("quiz-feedback-body").innerHTML = html;
+    elQuiz("quiz-feedback-wrap").classList.remove("hidden");
+  }
+
+  function lockOptionsReveal(correctKey, wrongSecondKey) {
+    document.querySelectorAll("#quiz-options .quiz-opt").forEach(function (b) {
+      b.disabled = true;
+      const k = b.getAttribute("data-key");
+      if (k === correctKey) b.classList.add("reveal-correct");
+      if (wrongSecondKey && k === wrongSecondKey) b.classList.add("picked-wrong");
+    });
+  }
+
+  function showNextBtn() {
+    const btn = elQuiz("btn-quiz-next");
+    btn.classList.remove("hidden");
+    btn.textContent = quizSession.index >= 9 ? "查看结算" : "下一题";
+  }
+
+  function renderCurrentQuestion() {
+    const q = quizSession.questions[quizSession.index];
+    elQuiz("quiz-stem").textContent = q.question;
+    updateProgressDisplay();
+    setStatus("", "");
+    elQuiz("quiz-feedback-wrap").classList.add("hidden");
+    elQuiz("btn-quiz-next").classList.add("hidden");
+
+    const wrap = elQuiz("quiz-options");
+    wrap.innerHTML = "";
+    ["A", "B", "C", "D"].forEach(function (k) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "quiz-opt";
+      b.setAttribute("data-key", k);
+      b.textContent = k + ". " + optionByLetter(q, k);
+      b.addEventListener("click", function () {
+        onPickOption(k, b);
+      });
+      wrap.appendChild(b);
+    });
+
+    quizSession.firstWrong = false;
+    quizSession.firstPick = null;
+    quizSession.awaitingNext = false;
+  }
+
+  function onPickOption(key, btn) {
+    if (!quizSession || quizSession.awaitingNext) return;
+    const q = quizSession.questions[quizSession.index];
+    const idx = quizSession.index;
+    const correct = answerLetter(q);
+
+    if (!quizSession.firstWrong) {
+      if (key === correct) {
+        quizSession.questionPoints[idx] = 10;
+        quizSession.totalScore += 10;
+        quizSession.firstOk += 1;
+        playCorrect();
+        updateScoreDisplay();
+        setStatus("回答正确", "ok");
+        showFeedbackPlain("解析", q.explanation);
+        lockOptionsReveal(correct, null);
+        quizSession.awaitingNext = true;
+        showNextBtn();
+      } else {
+        quizSession.firstWrong = true;
+        quizSession.firstPick = key;
+        btn.classList.add("picked-wrong");
+        playWrong();
+        setStatus("回答错误，请再试一次", "bad");
+        wrongBookMainRecordWrong(q, idx, 1);
+        if (!quizSession.weakTagByIdx) quizSession.weakTagByIdx = {};
+        if (!quizSession.sessionWeakTags) quizSession.sessionWeakTags = [];
+        if (!quizSession.weakTagByIdx[idx]) {
+          quizSession.weakTagByIdx[idx] = true;
+          quizSession.sessionWeakTags.push(inferKnowledgePoint(q.question));
+        }
+      }
+    } else {
+      if (key === correct) {
+        quizSession.questionPoints[idx] = 8;
+        quizSession.totalScore += 8;
+        quizSession.secondOk += 1;
+        playCorrect();
+        updateScoreDisplay();
+        setStatus("这次答对了", "ok");
+        showFeedbackPlain("解析", q.explanation);
+        lockOptionsReveal(correct, quizSession.firstPick);
+        quizSession.awaitingNext = true;
+        showNextBtn();
+      } else {
+        quizSession.questionPoints[idx] = 5;
+        quizSession.totalScore += 5;
+        quizSession.doubleWrong += 1;
+        updateScoreDisplay();
+        playWrong();
+        wrongBookMainRecordWrong(q, idx, 1);
+        setStatus("本题两次均未答对", "bad");
+        const html =
+          "<p><strong>正确答案：" +
+          escapeHtml(correct) +
+          ".</strong> " +
+          escapeHtml(optionByLetter(q, correct)) +
+          "</p><p>" +
+          escapeHtml(q.explanation).replace(/\n/g, "<br/>") +
+          "</p>";
+        showFeedbackHtml("解析与正确答案", html);
+        lockOptionsReveal(correct, key);
+        quizSession.awaitingNext = true;
+        showNextBtn();
+      }
+    }
+  }
+
+  function openSettlement() {
+    const s = quizSession.totalScore;
+    const passed = s >= 80;
+    const rightCount = quizSession.firstOk + quizSession.secondOk;
+    studySessionsAppend({
+      type: "main",
+      date: localDateStr(),
+      score: s,
+      totalQuestions: 10,
+      correctCount: rightCount,
+      weakPoints: dedupeStrings(quizSession.sessionWeakTags || []),
+    });
+    recordCheckInAfterCompletedQuiz();
+    refreshProfileLearningWidgets();
+    const expGain = s * 2;
+    let coinGain = s;
+    if (s === 100) coinGain += 20;
+    const homeGold = document.getElementById("home-gold-display");
+    if (homeGold) {
+      const cur = parseInt(homeGold.textContent, 10) || 0;
+      homeGold.textContent = String(cur + coinGain);
+    }
+    const bodyHtml = [
+      "总分：<strong>" + s + "</strong> 分",
+      "答对题数：<strong>" + rightCount + "</strong> / 10",
+      "其中一次答对：<strong>" + quizSession.firstOk + "</strong> 题；第二次才答对：<strong>" + quizSession.secondOk + "</strong> 题",
+      "通关结果：" + (passed ? "<strong style=\"color:#2d7a4a\">已通关（≥80 分）</strong>" : "<strong style=\"color:#a34e4e\">未通关</strong>"),
+      "获得经验：<strong>" + expGain + "</strong>",
+      "获得金币：<strong>" + coinGain + "</strong>",
+    ].join("<br/>");
+    elQuiz("quiz-settle-body").innerHTML = bodyHtml;
+    const bonus = elQuiz("quiz-settle-bonus");
+    if (s === 100) {
+      bonus.textContent = "满分额外奖励：十题均一次答对（100 分）！已发放附加金币（已计入上方总金币）。";
+      bonus.classList.remove("hidden");
+    } else {
+      bonus.classList.add("hidden");
+    }
+    playWin();
+    elQuiz("quiz-settle-overlay").classList.add("open");
+  }
+
+  elQuiz("btn-quiz-next").addEventListener("click", function () {
+    if (!quizSession || !quizSession.awaitingNext) return;
+    if (quizSession.index >= 9) {
+      openSettlement();
+      return;
+    }
+    quizSession.index += 1;
+    renderCurrentQuestion();
+  });
+
+  elQuiz("btn-quiz-retry-load").addEventListener("click", function () {
+    cachedParsedQuestions = null;
+    onEnterQuiz();
+  });
+
+  elQuiz("btn-quiz-settle-retry").addEventListener("click", function () {
+    elQuiz("quiz-settle-overlay").classList.remove("open");
+    if (cachedParsedQuestions && cachedParsedQuestions.length === 10) {
+      startQuizSession(cachedParsedQuestions);
+    } else {
+      onEnterQuiz();
+    }
+  });
+
+  /* —— 每日挑战：60s、10 题、单选一次机会、内嵌题目、云端排行 —— */
+  const DAILY_POINTS_CORRECT = 10;
+
+  let dailyCachedQuestions = null;
+  let dailySession = null;
+  let dailySettled = false;
+  var pendingDoublePromptQuestions = null;
+
+  const BAG_DOUBLE_CARD_COUNT_KEY = "bag_doubleScoreCardCount_v1";
+  const BAG_LAST_GRANT_80_DAY_KEY = "bag_lastDoubleGrantFor80Day_v1";
+  const BAG_ARM_NEXT_DAILY_KEY = "bag_armDoubleNextDaily_v1";
+
+  function getDoubleCardCount() {
+    try {
+      return Math.max(0, parseInt(localStorage.getItem(BAG_DOUBLE_CARD_COUNT_KEY), 10) || 0);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function setDoubleCardCount(n) {
+    try {
+      localStorage.setItem(BAG_DOUBLE_CARD_COUNT_KEY, String(Math.max(0, n)));
+    } catch (e) {}
+  }
+
+  function addDoubleCards(delta) {
+    setDoubleCardCount(getDoubleCardCount() + delta);
+  }
+
+  function maybeGrantDoubleCardForDailyBaseScore80(baseScore) {
+    if (baseScore < 80) return;
+    var d = localDateStr();
+    try {
+      if (localStorage.getItem(BAG_LAST_GRANT_80_DAY_KEY) === d) return;
+      addDoubleCards(1);
+      localStorage.setItem(BAG_LAST_GRANT_80_DAY_KEY, d);
+    } catch (e) {}
+    refreshBagUI();
+  }
+
+  function refreshBagUI() {
+    var n = getDoubleCardCount();
+    var cEl = document.getElementById("bag-double-count");
+    if (cEl) cEl.textContent = String(n);
+    var btn = document.getElementById("btn-bag-arm-double");
+    var hint = document.getElementById("bag-arm-hint");
+    if (btn) btn.style.display = n > 0 ? "block" : "none";
+    if (hint) {
+      var armed = false;
+      try {
+        armed = localStorage.getItem(BAG_ARM_NEXT_DAILY_KEY) === "1";
+      } catch (e) {}
+      if (armed && n > 0) {
+        hint.style.display = "block";
+        hint.textContent = "已预设：进入每日挑战时将提示使用 1 张双倍卡。";
+      } else {
+        hint.style.display = "none";
+        hint.textContent = "";
+      }
+    }
+  }
+
+  function elDaily(id) {
+    return document.getElementById(id);
+  }
+
+  function resetDailyPanels() {
+    if (elDaily("daily-load-error")) elDaily("daily-load-error").classList.add("hidden");
+    if (elDaily("daily-loading")) elDaily("daily-loading").classList.add("hidden");
+    if (elDaily("daily-main")) elDaily("daily-main").classList.add("hidden");
+    if (elDaily("daily-settle-overlay")) elDaily("daily-settle-overlay").classList.remove("open");
+    if (elDaily("daily-ranking-overlay")) elDaily("daily-ranking-overlay").classList.remove("open");
+    if (elDaily("daily-double-prompt-overlay")) elDaily("daily-double-prompt-overlay").classList.remove("open");
+    pendingDoublePromptQuestions = null;
+    var st = elDaily("daily-settle-submit-status");
+    if (st) st.textContent = "";
+    var rl = elDaily("daily-settle-rank-line");
+    if (rl) {
+      rl.style.display = "none";
+      rl.textContent = "";
+    }
+  }
+
+  function updateDailyTimerDisplay() {
+    const el = elDaily("daily-timer-display");
+    if (!el || !dailySession) return;
+    el.textContent = String(Math.max(0, dailySession.secondsLeft));
+    el.classList.toggle("warn", dailySession.secondsLeft <= 10);
+    var dAud = getBgmDailyAudio();
+    if (dAud && !dailySession.ended && !dailySettled && !dAud.paused) {
+      var fast = dailySession.secondsLeft <= 10 && dailySession.secondsLeft > 0;
+      dAud.playbackRate = fast ? 1.12 : 1;
+    }
+  }
+
+  function renderDailyQuestion() {
+    if (!dailySession || dailySession.ended) return;
+    var dh0 = elDaily("daily-double-active-hint");
+    if (dh0) dh0.classList.toggle("hidden", !dailySession.useDoubleCard);
+    const q = dailySession.questions[dailySession.index];
+    elDaily("daily-stem").textContent = q.question;
+    elDaily("daily-score-val").textContent = String(dailySession.score);
+    elDaily("daily-q-num").textContent = String(dailySession.index + 1);
+    elDaily("daily-feedback").textContent = "";
+    elDaily("daily-feedback").className = "daily-feedback";
+    const wrap = elDaily("daily-options");
+    wrap.innerHTML = "";
+    ["A", "B", "C", "D"].forEach(function (k) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "quiz-opt";
+      b.setAttribute("data-key", k);
+      b.textContent = k + ". " + optionByLetter(q, k);
+      b.addEventListener("click", function () {
+        onPickDaily(k, b);
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  function endDailyChallenge() {
+    if (dailySettled) return;
+    dailySettled = true;
+    if (dailySession) {
+      dailySession.ended = true;
+      dailySession.transitioning = false;
+    }
+    stopDailyTimer();
+    const wrap = elDaily("daily-options");
+    if (wrap) {
+      wrap.querySelectorAll(".quiz-opt").forEach(function (b) {
+        b.disabled = true;
+      });
+    }
+    openDailySettlement();
+  }
+
+  function onPickDaily(key, btn) {
+    if (!dailySession || dailySession.ended || dailySession.transitioning || dailySettled) return;
+    if (dailySession.secondsLeft <= 0) return;
+    dailySession.transitioning = true;
+    const q = dailySession.questions[dailySession.index];
+    const wrap = elDaily("daily-options");
+    wrap.querySelectorAll(".quiz-opt").forEach(function (b) {
+      b.disabled = true;
+    });
+
+    const correct = answerLetter(q);
+    const ok = key === correct;
+    const fb = elDaily("daily-feedback");
+    if (ok) {
+      dailySession.score += DAILY_POINTS_CORRECT;
+      dailySession.correct += 1;
+      elDaily("daily-score-val").textContent = String(dailySession.score);
+      fb.textContent = "回答正确，+" + DAILY_POINTS_CORRECT + " 分";
+      fb.className = "daily-feedback ok";
+      btn.classList.add("reveal-correct");
+      playCorrect();
+    } else {
+      fb.textContent = "回答错误，本题不得分";
+      fb.className = "daily-feedback bad";
+      btn.classList.add("picked-wrong");
+      const rightBtn = wrap.querySelector('.quiz-opt[data-key="' + correct + '"]');
+      if (rightBtn) rightBtn.classList.add("reveal-correct");
+      if (!dailySession.weakTagsList) dailySession.weakTagsList = [];
+      dailySession.weakTagsList.push(inferKnowledgePoint(q.question));
+      playWrong();
+    }
+
+    setTimeout(function () {
+      if (!dailySession || dailySession.ended || dailySettled) return;
+      dailySession.transitioning = false;
+      if (dailySession.index >= 9) {
+        endDailyChallenge();
+        return;
+      }
+      dailySession.index += 1;
+      renderDailyQuestion();
+    }, 650);
+  }
+
+  function openDailySettlement() {
+    var wasTimeUp = !!(dailySession && dailySession.endedByTime);
+    stopTenseBgm();
+    startRelaxBgm();
+    if (wasTimeUp) {
+      playDailyTimeUp();
+      setTimeout(function () {
+        playWin();
+      }, 300);
+    } else {
+      playWin();
+    }
+    var baseS = dailySession ? dailySession.score : 0;
+    var useDbl = !!(dailySession && dailySession.useDoubleCard);
+    var finalS = useDbl ? baseS * 2 : baseS;
+    var c = dailySession ? dailySession.correct : 0;
+    var coins = finalS;
+    maybeGrantDoubleCardForDailyBaseScore80(baseS);
+    var sumHtml =
+      "本次基础得分：<strong>" +
+      baseS +
+      "</strong> 分<br/>答对题数：<strong>" +
+      c +
+      "</strong> / 10<br/>获得金币：<strong>" +
+      coins +
+      "</strong>";
+    if (useDbl) {
+      sumHtml +=
+        "<br/><span style=\"color:#b45f00;font-weight:800\">双倍积分卡已生效：结算与上传分数为 <strong>" +
+        finalS +
+        "</strong> 分（基础×2）</span>";
+    }
+    elDaily("daily-settle-summary").innerHTML = sumHtml;
+    var st = elDaily("daily-settle-submit-status");
+    if (st) st.textContent = "";
+    var rl = elDaily("daily-settle-rank-line");
+    if (rl) {
+      rl.style.display = "none";
+      rl.textContent = "";
+    }
+    var hg = document.getElementById("home-gold-display");
+    if (hg) {
+      var cur = parseInt(hg.textContent, 10) || 0;
+      hg.textContent = String(cur + coins);
+    }
+    elDaily("daily-settle-overlay").classList.add("open");
+
+    studySessionsAppend({
+      type: "daily",
+      date: localDateStr(),
+      score: baseS,
+      totalQuestions: 10,
+      correctCount: c,
+      weakPoints: dedupeStrings((dailySession && dailySession.weakTagsList) || []),
+    });
+    recordCheckInAfterCompletedQuiz();
+    refreshProfileLearningWidgets();
+
+    var nick = getPlayerNickname();
+    var hasApi = !!normalizeApiBase(API_BASE);
+    if (st) {
+      st.textContent = hasApi ? "正在提交成绩到云端…" : "提示：未配置 API_BASE，成绩未上传（本地金币已结算）。";
+    }
+    if (!hasApi) return;
+
+    submitScoreToBackend(nick, finalS, "daily")
+      .then(function (res) {
+        if (res && res.skipped) {
+          if (st) st.textContent = res.message || "未提交";
+          return null;
+        }
+        if (res && res.success === false) {
+          if (st) st.textContent = "提交失败：" + (res.error || res.message || "未知错误");
+          return null;
+        }
+        if (res && res.success) {
+          if (st) st.textContent = "成绩已提交。";
+        } else if (st) {
+          st.textContent = "提交已返回（请确认后端 success 字段）。";
+        }
+        return fetchRankingFromBackend().catch(function () {
+          return null;
+        });
+      })
+      .then(function (payload) {
+        if (!payload || !rl) return;
+        var rows = sortRankingRows(parseRankingPayload(payload));
+        var myRank = computeMyRank(rows, nick);
+        if (myRank != null) {
+          rl.style.display = "block";
+          rl.textContent = "当前昵称在榜中排名：第 " + myRank + " 名";
+        }
+      })
+      .catch(function (err) {
+        if (st) st.textContent = "提交出错：" + ((err && err.message) || String(err));
+      });
+  }
+
+  function promptDoubleCardThenStart(questions) {
+    pendingDoublePromptQuestions = questions;
+    var cnt = getDoubleCardCount();
+    var armed = false;
+    try {
+      armed = localStorage.getItem(BAG_ARM_NEXT_DAILY_KEY) === "1";
+    } catch (e) {}
+    if (cnt <= 0) {
+      try {
+        localStorage.removeItem(BAG_ARM_NEXT_DAILY_KEY);
+      } catch (e2) {}
+      pendingDoublePromptQuestions = null;
+      elDaily("daily-main").classList.remove("hidden");
+      startDailySession(questions, false);
+      return;
+    }
+    var ov = elDaily("daily-double-prompt-overlay");
+    var msg = elDaily("daily-double-prompt-msg");
+    if (!ov) {
+      pendingDoublePromptQuestions = null;
+      elDaily("daily-main").classList.remove("hidden");
+      startDailySession(questions, false);
+      return;
+    }
+    var inner =
+      "当前持有 <strong>" +
+      cnt +
+      "</strong> 张「双倍积分卡」。<br/><br/>是否在<strong>本次每日挑战</strong>中使用 <strong>1</strong> 张？<br/><br/><span style=\"font-size:12px;font-weight:600;color:var(--text-secondary)\">确认使用后将立刻扣减 1 张；本场<strong>结算得分与上传排行榜的分数</strong>为基础得分×2（学习报告仍记录基础分）。</span>";
+    if (armed) {
+      inner +=
+        "<br/><br/><span style=\"font-size:12px;font-weight:700;color:var(--primary-deep)\">（你已在背包中选择「下场使用」，可在此确认。）</span>";
+    }
+    if (msg) msg.innerHTML = inner;
+    ov.classList.add("open");
+  }
+
+  function startDailySession(questions, useDoubleCard) {
+    dailySettled = false;
+    dailySession = {
+      questions: questions,
+      index: 0,
+      score: 0,
+      correct: 0,
+      secondsLeft: 60,
+      ended: false,
+      endedByTime: false,
+      transitioning: false,
+      weakTagsList: [],
+      useDoubleCard: !!useDoubleCard,
+    };
+    var dh = elDaily("daily-double-active-hint");
+    if (dh) dh.classList.toggle("hidden", !dailySession.useDoubleCard);
+    updateDailyTimerDisplay();
+    renderDailyQuestion();
+    stopDailyTimer();
+    dailyTimerId = setInterval(function () {
+      if (!dailySession || dailySession.ended || dailySettled) return;
+      dailySession.secondsLeft -= 1;
+      updateDailyTimerDisplay();
+      if (dailySession.secondsLeft <= 0) {
+        dailySession.secondsLeft = 0;
+        dailySession.endedByTime = true;
+        updateDailyTimerDisplay();
+        endDailyChallenge();
+      }
+    }, 1000);
+    startTenseDailyBgm();
+  }
+
+  function onEnterDaily() {
+    stopDailyTimer();
+    dailySettled = false;
+    dailySession = null;
+    resetDailyPanels();
+    try {
+      var qs = cloneQuestionsEmbedded(DAILY_QUESTIONS_EMBEDDED);
+      if (qs.length !== 10) throw new Error("内嵌每日挑战题目数量应为 10 道。");
+      dailyCachedQuestions = qs;
+      elDaily("daily-load-error").classList.add("hidden");
+      promptDoubleCardThenStart(qs);
+    } catch (e) {
+      console.error(e);
+      dailyCachedQuestions = null;
+      elDaily("daily-load-error").classList.remove("hidden");
+      elDaily("daily-load-error-msg").textContent = (e && e.message) || String(e);
+    }
+  }
+
+  elDaily("btn-daily-retry-load").addEventListener("click", function () {
+    dailyCachedQuestions = null;
+    onEnterDaily();
+  });
+
+  elDaily("btn-daily-settle-retry").addEventListener("click", function () {
+    elDaily("daily-settle-overlay").classList.remove("open");
+    if (dailyCachedQuestions && dailyCachedQuestions.length === 10) {
+      elDaily("daily-main").classList.add("hidden");
+      promptDoubleCardThenStart(dailyCachedQuestions);
+    } else {
+      onEnterDaily();
+    }
+  });
+
+  var btnDailyDoubleUse = document.getElementById("btn-daily-double-use");
+  if (btnDailyDoubleUse) {
+    btnDailyDoubleUse.addEventListener("click", function () {
+      var qs = pendingDoublePromptQuestions;
+      if (!qs) return;
+      if (getDoubleCardCount() <= 0) return;
+      elDaily("daily-double-prompt-overlay").classList.remove("open");
+      try {
+        localStorage.removeItem(BAG_ARM_NEXT_DAILY_KEY);
+      } catch (e) {}
+      addDoubleCards(-1);
+      pendingDoublePromptQuestions = null;
+      elDaily("daily-main").classList.remove("hidden");
+      refreshBagUI();
+      startDailySession(qs, true);
+    });
+  }
+  var btnDailyDoubleSkip = document.getElementById("btn-daily-double-skip");
+  if (btnDailyDoubleSkip) {
+    btnDailyDoubleSkip.addEventListener("click", function () {
+      var qs = pendingDoublePromptQuestions;
+      if (!qs) return;
+      elDaily("daily-double-prompt-overlay").classList.remove("open");
+      try {
+        localStorage.removeItem(BAG_ARM_NEXT_DAILY_KEY);
+      } catch (e) {}
+      pendingDoublePromptQuestions = null;
+      elDaily("daily-main").classList.remove("hidden");
+      startDailySession(qs, false);
+    });
+  }
+
+  var btnBagArmDouble = document.getElementById("btn-bag-arm-double");
+  if (btnBagArmDouble) {
+    btnBagArmDouble.addEventListener("click", function () {
+      if (getDoubleCardCount() <= 0) return;
+      try {
+        localStorage.setItem(BAG_ARM_NEXT_DAILY_KEY, "1");
+      } catch (e) {}
+      refreshBagUI();
+    });
+  }
+
+  var btnDailyOpenRanking = document.getElementById("btn-daily-open-ranking");
+  if (btnDailyOpenRanking) {
+    btnDailyOpenRanking.addEventListener("click", function () {
+      openDailyRankingModal();
+    });
+  }
+  var btnDailyRankingClose = document.getElementById("btn-daily-ranking-close");
+  if (btnDailyRankingClose) {
+    btnDailyRankingClose.addEventListener("click", function () {
+      var ov = document.getElementById("daily-ranking-overlay");
+      if (ov) ov.classList.remove("open");
+    });
+  }
+
+  var btnRankRefresh = document.getElementById("btn-rank-refresh");
+  if (btnRankRefresh) {
+    btnRankRefresh.addEventListener("click", function () {
+      onEnterRank();
+    });
+  }
+
+  var btnOpenStudyReport = document.getElementById("btn-open-study-report");
+  if (btnOpenStudyReport) {
+    btnOpenStudyReport.addEventListener("click", function () {
+      renderStudyReportModal();
+      var ov = document.getElementById("profile-report-overlay");
+      if (ov) ov.classList.add("open");
+    });
+  }
+  var btnProfileReportClose = document.getElementById("btn-profile-report-close");
+  if (btnProfileReportClose) {
+    btnProfileReportClose.addEventListener("click", function () {
+      var ov = document.getElementById("profile-report-overlay");
+      if (ov) ov.classList.remove("open");
+    });
+  }
+  var btnOpenWrongbook = document.getElementById("btn-open-wrongbook");
+  if (btnOpenWrongbook) {
+    btnOpenWrongbook.addEventListener("click", function () {
+      renderWrongBookModal();
+      var ov = document.getElementById("profile-wrongbook-overlay");
+      if (ov) ov.classList.add("open");
+    });
+  }
+  var btnProfileWrongbookClose = document.getElementById("btn-profile-wrongbook-close");
+  if (btnProfileWrongbookClose) {
+    btnProfileWrongbookClose.addEventListener("click", function () {
+      var ov = document.getElementById("profile-wrongbook-overlay");
+      if (ov) ov.classList.remove("open");
+    });
+  }
+  var wrongBookContentEl = document.getElementById("profile-wrongbook-content");
+  if (wrongBookContentEl) {
+    wrongBookContentEl.addEventListener("click", function (ev) {
+      var t = ev.target;
+      if (!t || !t.getAttribute) return;
+      var rid = t.getAttribute("data-remove-wrong");
+      if (!rid) return;
+      wrongBookMainRemoveById(rid);
+      renderWrongBookModal();
+      refreshProfileLearningWidgets();
+    });
+  }
+
+  /* —— 个人形象：四套预设，预览 / 保存 localStorage / 首页仅显示已保存 —— */
+  var AVATAR_PRESETS = {
+    sailor: { name: "小航海家", emoji: "⛵", previewBg: "linear-gradient(145deg,#b8e8ff,#5eb8e8)" },
+    mechanic: { name: "机械学徒", emoji: "🔧", previewBg: "linear-gradient(145deg,#e8ddd4,#9a8a7a)" },
+    knight: { name: "浪花骑士", emoji: "🛡️", previewBg: "linear-gradient(145deg,#c5ddf0,#4a7aa8)" },
+    mage: { name: "风暴术士", emoji: "🌩️", previewBg: "linear-gradient(145deg,#d4c4f7,#7c6bb8)" },
+  };
+  var AVATAR_ORDER = ["sailor", "mechanic", "knight", "mage"];
+  var AVATAR_LS_KEY = "profileAvatarPresetId_v1";
+
+  function getSavedAvatarId() {
+    try {
+      var id = localStorage.getItem(AVATAR_LS_KEY);
+      if (id && AVATAR_PRESETS[id]) return id;
+    } catch (e) {}
+    return AVATAR_ORDER[0];
+  }
+
+  function setPresetCardsActive(id) {
+    document.querySelectorAll(".preset-card").forEach(function (btn) {
+      var on = btn.getAttribute("data-preset-id") === id;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  function applyProfilePreviewOnly(id) {
+    var meta = AVATAR_PRESETS[id] || AVATAR_PRESETS[AVATAR_ORDER[0]];
+    var pid = AVATAR_PRESETS[id] ? id : AVATAR_ORDER[0];
+    var prev = document.getElementById("profile-avatar-preview");
+    var em = document.getElementById("profile-preview-emoji");
+    var nm = document.getElementById("profile-preview-name");
+    if (prev) prev.style.background = meta.previewBg;
+    if (em) em.textContent = meta.emoji;
+    if (nm) nm.textContent = meta.name;
+    setPresetCardsActive(pid);
+    return pid;
+  }
+
+  function syncHomeAvatarFromStorage() {
+    var id = getSavedAvatarId();
+    var meta = AVATAR_PRESETS[id];
+    var home = document.getElementById("home-avatar-icon");
+    if (home && meta) home.textContent = meta.emoji;
+  }
+
+  function initProfileAvatarUi() {
+    ensureDefaultNickname();
+    syncHomeAvatarFromStorage();
+    applyProfilePreviewOnly(getSavedAvatarId());
+    refreshProfileCard();
+  }
+
+  var btnSaveNickname = document.getElementById("btn-save-nickname");
+  if (btnSaveNickname) {
+    btnSaveNickname.addEventListener("click", function () {
+      var inp = document.getElementById("profile-nickname-input");
+      var v = setPlayerNickname(inp ? inp.value : "");
+      if (inp) inp.value = v;
+      var hint = document.getElementById("profile-save-hint");
+      if (hint) {
+        hint.textContent = "昵称已保存";
+        setTimeout(function () {
+          if (hint && hint.textContent === "昵称已保存") hint.textContent = "";
+        }, 2000);
+      }
+    });
+  }
+
+  document.querySelectorAll(".preset-card").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var id = btn.getAttribute("data-preset-id");
+      applyProfilePreviewOnly(id);
+      var h = document.getElementById("profile-save-hint");
+      if (h) h.textContent = "";
+    });
+  });
+
+  var btnSaveAvatar = document.getElementById("btn-save-avatar");
+  if (btnSaveAvatar) {
+    btnSaveAvatar.addEventListener("click", function () {
+      var active = document.querySelector(".preset-card.active");
+      var id = active ? active.getAttribute("data-preset-id") : getSavedAvatarId();
+      try {
+        localStorage.setItem(AVATAR_LS_KEY, id);
+      } catch (e) {}
+      syncHomeAvatarFromStorage();
+      var h = document.getElementById("profile-save-hint");
+      if (h) h.textContent = "已保存到本机";
+      setTimeout(function () {
+        if (h && h.textContent === "已保存到本机") h.textContent = "";
+      }, 2200);
+    });
+  }
+
+  var btnResetAvatar = document.getElementById("btn-reset-avatar");
+  if (btnResetAvatar) {
+    btnResetAvatar.addEventListener("click", function () {
+      try {
+        localStorage.removeItem(AVATAR_LS_KEY);
+      } catch (e) {}
+      applyProfilePreviewOnly(AVATAR_ORDER[0]);
+      syncHomeAvatarFromStorage();
+      var h = document.getElementById("profile-save-hint");
+      if (h) h.textContent = "已恢复为默认形象";
+      setTimeout(function () {
+        if (h && h.textContent === "已恢复为默认形象") h.textContent = "";
+      }, 2200);
+    });
+  }
+
+  bindIslandVideoOnce();
+
+  window.addEventListener("hashchange", syncFromHash);
+  syncFromHash();
+  initProfileAvatarUi();
+  refreshBagUI();
+})();
+  </script>
+</body>
+</html>
